@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Default" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Guid>2a98fdb1-2996-4831-b6f2-7f8af9089c30</Guid>
+    <Name>Small Unit Tactics</Name>
+    <Description>Part of Guerrilla War.
+
+Alters weaponry in tactical to have multiple fire modes, ambient suppression, and more accurate overwatch. Intended to encourage more application of fire and movement tactics.</Description>
+    <SteamPublishID>0</SteamPublishID>
+    <AssemblyName>SmallUnitTactics</AssemblyName>
+    <RootNamespace>SmallUnitTactics</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
+    <Folder Include="Content\" />
+    <Folder Include="Localization\" />
+    <Folder Include="Src\" />
+    <Folder Include="Src\SmallUnitTactics" />
+    <Folder Include="Src\SmallUnitTactics\Classes" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Config\XComEditor.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Config\XComEngine.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Config\XComGame.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Config\XComSmallUnitTactics.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Localization\SmallUnitTactics.int">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Localization\XComGame.int">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="ReadMe.txt" />
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_WeaponManager.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_ShotTypes.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\X2DownloadableContentInfo_SmallUnitTactics.uc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
+</Project>

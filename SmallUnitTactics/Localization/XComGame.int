@@ -1,0 +1,15 @@
+[SUT_AimedShot X2AbilityTemplate]
+LocFriendlyName="Aimed Shot"
+LocHelpText="Take a carefully aimed single shot at the target."
+
+[SUT_SnapShot X2AbilityTemplate]
+LocFriendlyName="Snap Shot"
+LocHelpText="Take a hastily aimed single shot at the target."
+
+[SUT_BurstShot X2AbilityTemplate]
+LocFriendlyName="Burst Fire"
+LocHelpText="Take a burst shot at the target."
+
+[SUT_AutoShot X2AbilityTemplate]
+LocFriendlyName="Automatic Fire"
+LocHelpText="Lay prolonged fire at the target."
