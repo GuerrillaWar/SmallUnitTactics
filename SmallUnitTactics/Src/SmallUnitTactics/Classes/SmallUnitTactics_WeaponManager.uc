@@ -1,12 +1,33 @@
 class SmallUnitTactics_WeaponManager extends Object config(SmallUnitTactics);
 
+struct SmallUnitTacticsShotProfile
+{
+  var int ShotCount;
+};
+
 struct SmallUnitTacticsWeaponProfile
 {
   var name WeaponName;
+  var SmallUnitTacticsShotProfile Burst;
+  var SmallUnitTacticsShotProfile Automatic;
 };
 
 var config array<SmallUnitTacticsWeaponProfile>   arrWeaponProfiles;
 
+static function SmallUnitTacticsWeaponProfile GetWeaponProfile(
+  name WeaponName
+)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  foreach default.arrWeaponProfiles(WeaponProfile)
+  {
+    if (WeaponProfile.WeaponName == WeaponName)
+    {
+      return WeaponProfile;
+    }
+  }
+}
 
 static function LoadWeaponProfiles ()
 {

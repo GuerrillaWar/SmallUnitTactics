@@ -4,17 +4,18 @@ static function array<X2DataTemplate> CreateTemplates()
 {
   local array<X2DataTemplate> Templates;
 
-  Templates.AddItem(AddShotType('SUT_AimedShot', 2));
-  Templates.AddItem(AddShotType('SUT_SnapShot', 1));
-  Templates.AddItem(AddShotType('SUT_BurstShot', 1));
-  Templates.AddItem(AddShotType('SUT_AutoShot', 2));
+  Templates.AddItem(AddShotType('SUT_AimedShot', 2, false));
+  Templates.AddItem(AddShotType('SUT_SnapShot', 1, false));
+  Templates.AddItem(AddShotType('SUT_BurstShot', 1, true));
+  Templates.AddItem(AddShotType('SUT_AutoShot', 2, true));
 
   return Templates;
 }
 
 static function X2AbilityTemplate AddShotType(
   name AbilityName='AimedShot',
-  int AbilityCost=1
+  int AbilityCost=1,
+  bool UseBurst=false
 ) {
   local X2AbilityTemplate                 Template;	
   local X2AbilityCost_Ammo                AmmoCost;
@@ -22,6 +23,10 @@ static function X2AbilityTemplate AddShotType(
   local array<name>                       SkipExclusions;
   local X2Effect_Knockback				KnockbackEffect;
   local X2Condition_Visibility            VisibilityCondition;
+  local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
+	local X2AbilityMultiTarget_BurstFire    BurstFireMultiTarget;
+	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
+	local X2AbilityToHitCalc_StandardAim    ToHitCalc;
 
   // Macro to do localisation and stuffs
   `CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
@@ -74,12 +79,30 @@ static function X2AbilityTemplate AddShotType(
   //  Various Soldier ability specific effects - effects check for the ability before applying	
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
 
-  // Damage Effect
-  Template.AddTargetEffect(default.WeaponUpgradeMissDamage);
+	// Damage Effect
+	WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage';
+	Template.AddTargetEffect(WeaponDamageEffect);
+	Template.AddMultiTargetEffect(WeaponDamageEffect);
 
-  // Hit Calculation (Different weapons now have different calculations for range)
-  Template.AbilityToHitCalc = default.SimpleStandardAim;
-  Template.AbilityToHitOwnerOnMissCalc = default.SimpleStandardAim;
+	ToHitCalc = new class'X2AbilityToHitCalc_StandardAim';
+	Template.AbilityToHitCalc = ToHitCalc;
+	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
+
+  if (UseBurst)
+  {
+    BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst';
+    BurstMultiTarget.AutomaticFire = AbilityName == 'SUT_AutoShot';
+    BurstMultiTarget.bAllowSameTarget = true;
+    Template.AbilityMultiTargetStyle = BurstMultiTarget;
+
+
+    /* BurstFireMultiTarget = new class'X2AbilityMultiTarget_BurstFire'; */
+    /* BurstFireMultiTarget.NumExtraShots = 4; */
+    /* Template.AbilityMultiTargetStyle = BurstFireMultiTarget; */
+
+
+  }
+
     
   // Targeting Method
   Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';

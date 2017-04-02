@@ -41,6 +41,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_WeaponManager.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2AbilityMultiTarget_Burst.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_ShotTypes.uc">
       <SubType>Content</SubType>
     </Content>
