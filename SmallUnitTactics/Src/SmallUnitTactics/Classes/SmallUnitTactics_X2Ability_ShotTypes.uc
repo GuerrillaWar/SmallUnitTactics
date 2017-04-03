@@ -4,8 +4,8 @@ static function array<X2DataTemplate> CreateTemplates()
 {
   local array<X2DataTemplate> Templates;
 
-  Templates.AddItem(AddShotType('SUT_AimedShot', 2, false));
-  Templates.AddItem(AddShotType('SUT_SnapShot', 1, false));
+  Templates.AddItem(AddShotType('SUT_AimedShot', 2, true));
+  Templates.AddItem(AddShotType('SUT_SnapShot', 1, true));
   Templates.AddItem(AddShotType('SUT_BurstShot', 1, true));
   Templates.AddItem(AddShotType('SUT_AutoShot', 2, true));
 

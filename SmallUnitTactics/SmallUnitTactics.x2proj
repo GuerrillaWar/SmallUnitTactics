@@ -38,6 +38,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="ReadMe.txt" />
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_ListenerManager.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_WeaponManager.uc">
       <SubType>Content</SubType>
     </Content>

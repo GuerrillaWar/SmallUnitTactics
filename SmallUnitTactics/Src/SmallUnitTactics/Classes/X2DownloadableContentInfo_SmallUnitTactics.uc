@@ -6,3 +6,25 @@ static event OnPostTemplatesCreated()
 
   class'SmallUnitTactics_WeaponManager'.static.LoadWeaponProfiles();
 }
+
+
+static event OnLoadedSavedGame()
+{
+	class'SmallUnitTactics_GameState_ListenerManager'.static.CreateListenerManager();
+}
+
+static event OnLoadedSavedGameToStrategy()
+{
+	class'SmallUnitTactics_GameState_ListenerManager'.static.RefreshListeners();
+}
+
+static event InstallNewCampaign(XComGameState StartState)
+{
+	class'SmallUnitTactics_GameState_ListenerManager'.static.CreateListenerManager(StartState);
+}
+
+/// </summary>
+static event OnPostMission()
+{
+	class'SmallUnitTactics_GameState_ListenerManager'.static.RefreshListeners();
+}

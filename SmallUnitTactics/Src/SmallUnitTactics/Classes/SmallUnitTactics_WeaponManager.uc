@@ -8,6 +8,9 @@ struct SmallUnitTacticsShotProfile
 struct SmallUnitTacticsWeaponProfile
 {
   var name WeaponName;
+  var WeaponDamageValue BulletProfile;
+  var SmallUnitTacticsShotProfile Aimed;
+  var SmallUnitTacticsShotProfile Snap;
   var SmallUnitTacticsShotProfile Burst;
   var SmallUnitTacticsShotProfile Automatic;
 };
@@ -46,12 +49,28 @@ static function LoadWeaponProfiles ()
     foreach ItemTemplates(ItemTemplate)
     {
       WeaponTemplate = X2WeaponTemplate(ItemTemplate);
+      WeaponTemplate.BaseDamage = WeaponProfile.BulletProfile;
 
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
-      WeaponTemplate.Abilities.AddItem('SUT_AimedShot');
-      WeaponTemplate.Abilities.AddItem('SUT_SnapShot');
-      WeaponTemplate.Abilities.AddItem('SUT_BurstShot');
-      WeaponTemplate.Abilities.AddItem('SUT_AutoShot');
+      if (WeaponProfile.Aimed.ShotCount > 0)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_AimedShot');
+      }
+
+      if (WeaponProfile.Snap.ShotCount > 0)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_SnapShot');
+      }
+
+      if (WeaponProfile.Burst.ShotCount > 0)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_BurstShot');
+      }
+
+      if (WeaponProfile.Automatic.ShotCount > 0)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_AutoShot');
+      }
     }
   }
 }

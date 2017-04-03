@@ -5,11 +5,11 @@ var bool AutomaticFire;
 
 simulated function GetMultiTargetOptions(const XComGameState_Ability Ability, out array<AvailableTarget> Targets)
 { 
-  local AvailableTarget Target;
   local XComGameState_Item WeaponState;
   local StateObjectReference AdditionalTarget;
   local SmallUnitTacticsWeaponProfile WeaponProfile;
   local SmallUnitTacticsShotProfile ShotProfile;
+  local int ix;
 
   WeaponState = XComGameState_Item(
     `XCOMHISTORY.GetGameStateForObjectID(Ability.SourceWeapon.ObjectID)
@@ -30,12 +30,14 @@ simulated function GetMultiTargetOptions(const XComGameState_Ability Ability, ou
   }
 
   `log("ShotProfileCount==" @ ShotProfile.ShotCount);
-  foreach Targets(Target)
+
+  
+  for (ix = 0; ix < Targets.Length; ix++)
   {
-    while (Target.AdditionalTargets.Length < ShotProfile.ShotCount - 1)
+    while (Targets[ix].AdditionalTargets.Length < ShotProfile.ShotCount - 1)
     {
       `log("Adding Target");
-      Target.AdditionalTargets.AddItem(Target.PrimaryTarget);
+      Targets[ix].AdditionalTargets.AddItem(Targets[ix].PrimaryTarget);
     }
   }
 }
