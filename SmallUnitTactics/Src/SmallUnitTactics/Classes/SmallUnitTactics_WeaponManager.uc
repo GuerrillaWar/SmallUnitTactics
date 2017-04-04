@@ -1,5 +1,13 @@
 class SmallUnitTactics_WeaponManager extends Object config(SmallUnitTactics);
 
+enum eSUTFireMode
+{
+  eSUTFireMode_Aimed,
+  eSUTFireMode_Snap,
+  eSUTFireMode_Burst,
+  eSUTFireMode_Automatic,
+};
+
 struct SmallUnitTacticsShotProfile
 {
   var int ShotCount;
@@ -8,6 +16,7 @@ struct SmallUnitTacticsShotProfile
 struct SmallUnitTacticsWeaponProfile
 {
   var name WeaponName;
+  var int iClipSize;
   var WeaponDamageValue BulletProfile;
   var SmallUnitTacticsShotProfile Aimed;
   var SmallUnitTacticsShotProfile Snap;
@@ -32,6 +41,31 @@ static function SmallUnitTacticsWeaponProfile GetWeaponProfile(
   }
 }
 
+static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+
+  if (FireMode == eSUTFireMode_Snap)
+  {
+    return WeaponProfile.Snap.ShotCount;
+  }
+  else if (FireMode == eSUTFireMode_Aimed)
+  {
+    return WeaponProfile.Aimed.ShotCount;
+  }
+  else if (FireMode == eSUTFireMode_Burst)
+  {
+    return WeaponProfile.Burst.ShotCount;
+  }
+  else if (FireMode == eSUTFireMode_Automatic)
+  {
+    return WeaponProfile.Automatic.ShotCount;
+  }
+  return 0;
+}
+
 static function LoadWeaponProfiles ()
 {
   local SmallUnitTacticsWeaponProfile WeaponProfile;
@@ -50,6 +84,7 @@ static function LoadWeaponProfiles ()
     {
       WeaponTemplate = X2WeaponTemplate(ItemTemplate);
       WeaponTemplate.BaseDamage = WeaponProfile.BulletProfile;
+      WeaponTemplate.iClipSize = WeaponProfile.iClipSize;
 
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
       if (WeaponProfile.Aimed.ShotCount > 0)

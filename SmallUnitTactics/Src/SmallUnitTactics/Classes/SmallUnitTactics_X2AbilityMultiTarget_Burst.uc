@@ -1,42 +1,25 @@
-class SmallUnitTactics_X2AbilityMultiTarget_Burst extends X2AbilityMultiTargetStyle;
+class SmallUnitTactics_X2AbilityMultiTarget_Burst extends X2AbilityMultiTargetStyle
+dependson(SmallUnitTactics_WeaponManager);
 
-var bool AutomaticFire;
-
+var eSUTFireMode FireMode;
 
 simulated function GetMultiTargetOptions(const XComGameState_Ability Ability, out array<AvailableTarget> Targets)
 { 
   local XComGameState_Item WeaponState;
-  local StateObjectReference AdditionalTarget;
-  local SmallUnitTacticsWeaponProfile WeaponProfile;
-  local SmallUnitTacticsShotProfile ShotProfile;
-  local int ix;
+  local int ix, ShotCount;
 
   WeaponState = XComGameState_Item(
     `XCOMHISTORY.GetGameStateForObjectID(Ability.SourceWeapon.ObjectID)
   );
 
-  `log("WeaponShotProfile==" @ WeaponState.GetMyTemplateName());
-  WeaponProfile = class'SmallUnitTactics_WeaponManager'.static.GetWeaponProfile(
-    WeaponState.GetMyTemplateName()
+  ShotCount = class'SmallUnitTactics_WeaponManager'.static.GetShotCount(
+    WeaponState.GetMyTemplateName(), FireMode
   );
 
-  if (AutomaticFire)
-  {
-    ShotProfile = WeaponProfile.Automatic;
-  }
-  else
-  {
-    ShotProfile = WeaponProfile.Burst;
-  }
-
-  `log("ShotProfileCount==" @ ShotProfile.ShotCount);
-
-  
   for (ix = 0; ix < Targets.Length; ix++)
   {
-    while (Targets[ix].AdditionalTargets.Length < ShotProfile.ShotCount - 1)
+    while (Targets[ix].AdditionalTargets.Length < ShotCount - 1)
     {
-      `log("Adding Target");
       Targets[ix].AdditionalTargets.AddItem(Targets[ix].PrimaryTarget);
     }
   }

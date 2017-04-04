@@ -4,10 +4,10 @@ static function array<X2DataTemplate> CreateTemplates()
 {
   local array<X2DataTemplate> Templates;
 
-  Templates.AddItem(AddShotType('SUT_AimedShot', 2, true));
-  Templates.AddItem(AddShotType('SUT_SnapShot', 1, true));
-  Templates.AddItem(AddShotType('SUT_BurstShot', 1, true));
-  Templates.AddItem(AddShotType('SUT_AutoShot', 2, true));
+  Templates.AddItem(AddShotType('SUT_AimedShot', 2, eSUTFireMode_Aimed));
+  Templates.AddItem(AddShotType('SUT_SnapShot', 1, eSUTFireMode_Snap));
+  Templates.AddItem(AddShotType('SUT_BurstShot', 1, eSUTFireMode_Burst));
+  Templates.AddItem(AddShotType('SUT_AutoShot', 2, eSUTFireMode_Automatic));
 
   return Templates;
 }
@@ -15,10 +15,10 @@ static function array<X2DataTemplate> CreateTemplates()
 static function X2AbilityTemplate AddShotType(
   name AbilityName='AimedShot',
   int AbilityCost=1,
-  bool UseBurst=false
+  eSUTFireMode FireMode=eSUTFireMode_Aimed
 ) {
   local X2AbilityTemplate                 Template;	
-  local X2AbilityCost_Ammo                AmmoCost;
+  local SmallUnitTactics_AbilityCost_BurstAmmoCost  AmmoCost;
   local X2AbilityCost_ActionPoints        ActionPointCost;
   local array<name>                       SkipExclusions;
   local X2Effect_Knockback				KnockbackEffect;
@@ -65,10 +65,10 @@ static function X2AbilityTemplate AddShotType(
   Template.AbilityCosts.AddItem(ActionPointCost);	
 
   // Ammo
-  AmmoCost = new class'X2AbilityCost_Ammo';	
-  AmmoCost.iAmmo = 1;
+  AmmoCost = new class'SmallUnitTactics_AbilityCost_BurstAmmoCost';	
+  AmmoCost.FireMode = FireMode;
   Template.AbilityCosts.AddItem(AmmoCost);
-  Template.bAllowAmmoEffects = true; // 	
+  Template.bAllowAmmoEffects = true;
   Template.bAllowBonusWeaponEffects = true;
 
   // Weapon Upgrade Compatibility
@@ -88,21 +88,16 @@ static function X2AbilityTemplate AddShotType(
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
 
-  if (UseBurst)
-  {
-    BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst';
-    BurstMultiTarget.AutomaticFire = AbilityName == 'SUT_AutoShot';
-    BurstMultiTarget.bAllowSameTarget = true;
-    Template.AbilityMultiTargetStyle = BurstMultiTarget;
-
-
-    /* BurstFireMultiTarget = new class'X2AbilityMultiTarget_BurstFire'; */
-    /* BurstFireMultiTarget.NumExtraShots = 4; */
-    /* Template.AbilityMultiTargetStyle = BurstFireMultiTarget; */
-
-
-  }
-
+  BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst';
+  BurstMultiTarget.FireMode = FireMode;
+  BurstMultiTarget.bAllowSameTarget = true;
+  Template.AbilityMultiTargetStyle = BurstMultiTarget;
+  // we will not use this soon, recursive ability calls ideal because
+  // X2 doesn't really handle more than one projectile well in terms
+  // of environ damage
+  /* BurstFireMultiTarget = new class'X2AbilityMultiTarget_BurstFire'; */
+  /* BurstFireMultiTarget.NumExtraShots = 4; */
+  /* Template.AbilityMultiTargetStyle = BurstFireMultiTarget; */
     
   // Targeting Method
   Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
@@ -123,8 +118,48 @@ static function X2AbilityTemplate AddShotType(
   KnockbackEffect.KnockbackDistance = 2;
   KnockbackEffect.bUseTargetLocation = true;
   Template.AddTargetEffect(KnockbackEffect);
+  Template.DamagePreviewFn = FireDamagePreview;
 
   Template.PostActivationEvents.AddItem('StandardShotActivated');
 
   return Template;	
+}
+
+
+function bool FireDamagePreview(
+  XComGameState_Ability AbilityState,
+  StateObjectReference TargetRef,
+  out WeaponDamageValue MinDamagePreview,
+  out WeaponDamageValue MaxDamagePreview,
+  out int AllowsShield
+) {
+  local XComGameState_Item WeaponState;
+  local X2AbilityTemplate AbilityTemplate;
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+  local eSUTFireMode FireMode;
+  local int ShotCount;
+
+  WeaponState = XComGameState_Item(
+    `XCOMHISTORY.GetGameStateForObjectID(AbilityState.SourceWeapon.ObjectID)
+  );
+  AbilityTemplate = AbilityState.GetMyTemplate();
+  FireMode = SmallUnitTactics_AbilityCost_BurstAmmoCost(
+    AbilityTemplate.AbilityCosts[0]
+  ).FireMode;
+
+  WeaponProfile = class'SmallUnitTactics_WeaponManager'.static.GetWeaponProfile(
+    WeaponState.GetMyTemplateName()
+  );
+  ShotCount = class'SmallUnitTactics_WeaponManager'.static.GetShotCount(
+    WeaponState.GetMyTemplateName(), FireMode
+  );
+
+  MinDamagePreview.Damage = WeaponProfile.BulletProfile.Damage - WeaponProfile.BulletProfile.Spread;
+  MinDamagePreview.Pierce = WeaponProfile.BulletProfile.Pierce;
+  MinDamagePreview.Shred = WeaponProfile.BulletProfile.Shred;
+  MaxDamagePreview.Damage = ShotCount * (WeaponProfile.BulletProfile.Damage + WeaponProfile.BulletProfile.Spread);
+  MaxDamagePreview.Pierce = ShotCount * (WeaponProfile.BulletProfile.Pierce);
+  MaxDamagePreview.Shred = ShotCount * (WeaponProfile.BulletProfile.Shred);
+
+	return true;
 }

@@ -63,7 +63,7 @@ function EventListenerReturn ToHitOverrideListener(Object EventData, Object Even
 	local X2AbilityToHitCalc				ToHitCalc;
 	local X2AbilityToHitCalc_StandardAim	StandardAim;
 	/* local ToHitAdjustments					Adjustments; */
-	local ShotModifierInfo					ModInfo;
+	/* local ShotModifierInfo					ModInfo; */
 
 	OverrideToHit = XComLWTuple(EventData);
 	if(OverrideToHit == none)
