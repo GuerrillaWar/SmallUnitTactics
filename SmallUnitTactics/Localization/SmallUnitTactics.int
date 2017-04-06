@@ -1,0 +1,3 @@
+[SmallUnitTactics_X2Ability_ShotTypes]
+SuppressionTargetEffectName="Incoming Fire"
+SuppressionTargetEffectDesc="Suffering <Ability:AmbientSuppressionPenalty/> penalty to aim from incoming fire."

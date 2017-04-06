@@ -11,6 +11,7 @@ enum eSUTFireMode
 struct SmallUnitTacticsShotProfile
 {
   var int ShotCount;
+  var int SuppressionPenalty;
 };
 
 struct SmallUnitTacticsWeaponProfile
@@ -62,6 +63,31 @@ static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
   else if (FireMode == eSUTFireMode_Automatic)
   {
     return WeaponProfile.Automatic.ShotCount;
+  }
+  return 0;
+}
+
+static function int GetSuppressionPenalty(name WeaponName, eSUTFireMode FireMode)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+
+  if (FireMode == eSUTFireMode_Snap)
+  {
+    return WeaponProfile.Snap.SuppressionPenalty;
+  }
+  else if (FireMode == eSUTFireMode_Aimed)
+  {
+    return WeaponProfile.Aimed.SuppressionPenalty;
+  }
+  else if (FireMode == eSUTFireMode_Burst)
+  {
+    return WeaponProfile.Burst.SuppressionPenalty;
+  }
+  else if (FireMode == eSUTFireMode_Automatic)
+  {
+    return WeaponProfile.Automatic.SuppressionPenalty;
   }
   return 0;
 }

@@ -1,5 +1,10 @@
 class SmallUnitTactics_X2Ability_ShotTypes extends X2Ability;
 
+
+
+var localized string SuppressionTargetEffectName;
+var localized string SuppressionTargetEffectDesc;
+
 static function array<X2DataTemplate> CreateTemplates()
 {
   local array<X2DataTemplate> Templates;
@@ -22,6 +27,7 @@ static function X2AbilityTemplate AddShotType(
   local X2AbilityCost_ActionPoints        ActionPointCost;
   local array<name>                       SkipExclusions;
   local X2Effect_Knockback				KnockbackEffect;
+  local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
   local X2Condition_Visibility            VisibilityCondition;
   local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
 	local X2AbilityMultiTarget_BurstFire    BurstFireMultiTarget;
@@ -79,14 +85,32 @@ static function X2AbilityTemplate AddShotType(
   //  Various Soldier ability specific effects - effects check for the ability before applying	
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
 
+
 	// Damage Effect
 	WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage';
 	Template.AddTargetEffect(WeaponDamageEffect);
-	Template.AddMultiTargetEffect(WeaponDamageEffect);
+
+  SuppressionEffect = new class'SmallUnitTactics_Effect_AmbientSuppression';
+  SuppressionEffect.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+  SuppressionEffect.bRemoveWhenTargetDies = true;
+  SuppressionEffect.FireMode = FireMode;
+  SuppressionEffect.bApplyOnMiss = true;
+  SuppressionEffect.bApplyOnHit = true;
+  SuppressionEffect.bRemoveWhenSourceDamaged = false;
+  SuppressionEffect.bBringRemoveVisualizationForward = true;
+  SuppressionEffect.SetDisplayInfo(ePerkBuff_Penalty, default.SuppressionTargetEffectName, default.SuppressionTargetEffectDesc, Template.IconImage);
+  /* SuppressionEffect.SetSourceDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, default.SuppressionSourceEffectDesc, Template.IconImage); */
+  Template.AddTargetEffect(SuppressionEffect);
+
+  if (FireMode == eSUTFireMode_Burst || FireMode == eSUTFireMode_Automatic)
+  {
+    Template.AddMultiTargetEffect(WeaponDamageEffect);
+  }
 
 	ToHitCalc = new class'X2AbilityToHitCalc_StandardAim';
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
+  Template.bIsASuppressionEffect = true;
 
   BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst';
   BurstMultiTarget.FireMode = FireMode;

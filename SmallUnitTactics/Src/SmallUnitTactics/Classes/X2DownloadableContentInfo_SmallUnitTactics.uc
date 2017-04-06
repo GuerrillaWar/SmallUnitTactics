@@ -5,6 +5,7 @@ static event OnPostTemplatesCreated()
   `log("SmallUnitTactics :: Present And Correct");
 
   class'SmallUnitTactics_WeaponManager'.static.LoadWeaponProfiles();
+  class'SmallUnitTactics_CharacterManager'.static.UpdateCharacterProfiles();
 }
 
 
