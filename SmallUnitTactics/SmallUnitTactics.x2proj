@@ -19,6 +19,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Folder Include="Src\SmallUnitTactics\Classes" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Config\XComAI.ini">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Config\XComEditor.ini">
       <SubType>Content</SubType>
     </Content>
@@ -54,6 +57,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2AbilityMultiTarget_Burst.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2AbilityTag.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_ShotTypes.uc">

@@ -12,13 +12,13 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 	SourceAbility = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(EffectState.ApplyEffectParameters.AbilityStateObjectRef.ObjectID));
 
   ShotMod.ModType = eHit_Success;
-  ShotMod.Value = GetAimModifierFromAbility(SourceAbility, Attacker);
+  ShotMod.Value = GetAimModifierFromAbility(SourceAbility);
   ShotMod.Reason = FriendlyName;
 
   ShotModifiers.AddItem(ShotMod);
 }
 
-function int GetAimModifierFromAbility(XComGameState_Ability SourceAbility, XComGameState_Unit SuppressedUnit)
+function int GetAimModifierFromAbility(XComGameState_Ability SourceAbility)
 {
 	local XComGameState_Item ItemState;
 	local name WeaponName;
