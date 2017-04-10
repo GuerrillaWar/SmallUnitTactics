@@ -13,6 +13,7 @@ static function array<X2DataTemplate> CreateTemplates()
   Templates.AddItem(AddShotType('SUT_SnapShot', 1, eSUTFireMode_Snap));
   Templates.AddItem(AddShotType('SUT_BurstShot', 1, eSUTFireMode_Burst));
   Templates.AddItem(AddShotType('SUT_AutoShot', 2, eSUTFireMode_Automatic));
+  Templates.AddItem(AmbientSuppressionCancel());
 
   return Templates;
 }
@@ -30,7 +31,6 @@ static function X2AbilityTemplate AddShotType(
   local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
   local X2Condition_Visibility            VisibilityCondition;
   local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
-	local X2AbilityMultiTarget_BurstFire    BurstFireMultiTarget;
 	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
 	local X2AbilityToHitCalc_StandardAim    ToHitCalc;
 
@@ -186,4 +186,76 @@ function bool FireDamagePreview(
   MaxDamagePreview.Shred = ShotCount * (WeaponProfile.BulletProfile.Shred);
 
 	return true;
+}
+
+
+
+static function X2AbilityTemplate AmbientSuppressionCancel() {
+  local X2AbilityTemplate                 Template;	
+  local array<name>                       SkipExclusions;
+  local X2Condition_Visibility            VisibilityCondition;
+
+	local X2AbilityTrigger_Event	        Trigger;
+
+	local X2Condition_UnitEffectsWithAbilitySource TargetEffectCondition;
+	local X2Effect_RemoveEffects            RemoveSuppression;
+
+  // Macro to do localisation and stuffs
+  `CREATE_X2ABILITY_TEMPLATE(Template, 'SUT_AmbientSuppressionCancel');
+
+  // Icon Properties
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_supression";
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.CLASS_LIEUTENANT_PRIORITY;
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+
+  SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+  SkipExclusions.AddItem(class'X2StatusEffects'.default.BurningName);
+  Template.AddShooterEffectExclusions(SkipExclusions);
+
+  // Targeting Details
+  // Can only shoot visible enemies
+  VisibilityCondition = new class'X2Condition_Visibility';
+  VisibilityCondition.bRequireGameplayVisible = true;
+  VisibilityCondition.bAllowSquadsight = true;
+  Template.AbilityTargetConditions.AddItem(VisibilityCondition);
+  // Can't target dead; Can't target friendlies
+  Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
+  // Can't shoot while dead
+  Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+  // Only at single targets that are in range.
+  Template.AbilityTargetStyle = default.SimpleSingleTarget;
+
+
+	//Trigger on movement - interrupt the move
+	Trigger = new class'X2AbilityTrigger_Event';
+	Trigger.EventObserverClass = class'X2TacticalGameRuleset_MovementObserver';
+	Trigger.MethodName = 'InterruptGameState';
+	Template.AbilityTriggers.AddItem(Trigger);
+
+	TargetEffectCondition = new class'X2Condition_UnitEffectsWithAbilitySource';
+	TargetEffectCondition.AddRequireEffect(class'SmallUnitTactics_Effect_AmbientSuppression'.default.EffectName, 'AA_UnitIsNotSuppressed');
+	Template.AbilityTargetConditions.AddItem(TargetEffectCondition);
+
+	RemoveSuppression = new class'X2Effect_RemoveEffects';
+	RemoveSuppression.EffectNamesToRemove.AddItem(class'SmallUnitTactics_Effect_AmbientSuppression'.default.EffectName);
+	RemoveSuppression.bCheckSource = true;
+	RemoveSuppression.SetupEffectOnShotContextResult(true, true);
+	Template.AddShooterEffect(RemoveSuppression);
+
+  // MAKE IT LIVE!
+  Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+  Template.BuildVisualizationFn = NoOpVisualisation;
+  Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+
+  Template.bDisplayInUITooltip = false;
+  Template.bDisplayInUITacticalText = false;
+
+  return Template;	
+}
+
+simulated function NoOpVisualisation(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+{
 }

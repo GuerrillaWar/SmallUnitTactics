@@ -17,11 +17,11 @@ event ExpandHandler(string InString, out string OutString)
   local XComGameState_Item ItemState;
   local X2ItemTemplate ItemTemplate;
   local X2AbilityTemplate AbilityTemplate;
-  local X2AbilityToHitCalc_StandardAim ToHitCalc;
-  local X2Effect EffectTemplate;
+  /* local X2AbilityToHitCalc_StandardAim ToHitCalc; */
+  /* local X2Effect EffectTemplate; */
   local XComGameStateHistory History;
   local array<string> Split;
-  local int idx;
+  /* local int idx; */
   local bool plusFlag;
 
   local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;

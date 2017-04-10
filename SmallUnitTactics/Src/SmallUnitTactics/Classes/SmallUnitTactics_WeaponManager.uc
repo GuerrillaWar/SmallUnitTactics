@@ -113,6 +113,7 @@ static function LoadWeaponProfiles ()
       WeaponTemplate.iClipSize = WeaponProfile.iClipSize;
 
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
+      WeaponTemplate.Abilities.AddItem('SUT_AmbientSuppressionCancel');
       if (WeaponProfile.Aimed.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_AimedShot');
