@@ -32,7 +32,7 @@ static function X2AbilityTemplate AddShotType(
   local X2Condition_Visibility            VisibilityCondition;
   local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
 	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
-	local X2AbilityToHitCalc_StandardAim    ToHitCalc;
+	local SmallUnitTactics_AbilityToHitCalc_StandardAim    ToHitCalc;
 
   // Macro to do localisation and stuffs
   `CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
@@ -107,7 +107,8 @@ static function X2AbilityTemplate AddShotType(
     Template.AddMultiTargetEffect(WeaponDamageEffect);
   }
 
-	ToHitCalc = new class'X2AbilityToHitCalc_StandardAim';
+	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
+  ToHitCalc.FireMode = FireMode;
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
   Template.bIsASuppressionEffect = true;

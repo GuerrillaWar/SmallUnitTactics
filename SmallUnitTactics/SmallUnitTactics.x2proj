@@ -44,6 +44,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_AbilityCost_BurstAmmoCost.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_AbilityToHitCalc_StandardAim.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_CharacterManager.uc">
       <SubType>Content</SubType>
     </Content>

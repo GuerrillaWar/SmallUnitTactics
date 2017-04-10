@@ -12,6 +12,8 @@ struct SmallUnitTacticsShotProfile
 {
   var int ShotCount;
   var int SuppressionPenalty;
+  var int AimModifier;
+  var int CritModifier;
 };
 
 struct SmallUnitTacticsWeaponProfile
@@ -63,6 +65,56 @@ static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
   else if (FireMode == eSUTFireMode_Automatic)
   {
     return WeaponProfile.Automatic.ShotCount;
+  }
+  return 0;
+}
+
+static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+
+  if (FireMode == eSUTFireMode_Snap)
+  {
+    return WeaponProfile.Snap.AimModifier;
+  }
+  else if (FireMode == eSUTFireMode_Aimed)
+  {
+    return WeaponProfile.Aimed.AimModifier;
+  }
+  else if (FireMode == eSUTFireMode_Burst)
+  {
+    return WeaponProfile.Burst.AimModifier;
+  }
+  else if (FireMode == eSUTFireMode_Automatic)
+  {
+    return WeaponProfile.Automatic.AimModifier;
+  }
+  return 0;
+}
+
+static function int GetCritModifier(name WeaponName, eSUTFireMode FireMode)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+
+  if (FireMode == eSUTFireMode_Snap)
+  {
+    return WeaponProfile.Snap.CritModifier;
+  }
+  else if (FireMode == eSUTFireMode_Aimed)
+  {
+    return WeaponProfile.Aimed.CritModifier;
+  }
+  else if (FireMode == eSUTFireMode_Burst)
+  {
+    return WeaponProfile.Burst.CritModifier;
+  }
+  else if (FireMode == eSUTFireMode_Automatic)
+  {
+    return WeaponProfile.Automatic.CritModifier;
   }
   return 0;
 }
