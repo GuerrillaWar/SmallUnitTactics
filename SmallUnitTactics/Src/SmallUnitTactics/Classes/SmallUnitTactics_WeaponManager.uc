@@ -179,11 +179,13 @@ static function LoadWeaponProfiles ()
       if (WeaponProfile.Burst.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_BurstShot');
+        WeaponTemplate.Abilities.AddItem('SUT_BurstFollowShot');
       }
 
       if (WeaponProfile.Automatic.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_AutoShot');
+        WeaponTemplate.Abilities.AddItem('SUT_AutoFollowShot');
       }
     }
   }

@@ -57,6 +57,7 @@ function InitListeners()
 }
 
 
+
 function EventListenerReturn ToHitOverrideListener(Object EventData, Object EventSource, XComGameState NewGameState, Name InEventID)
 {
 	local XComLWTuple						OverrideToHit;

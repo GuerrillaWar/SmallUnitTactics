@@ -14,6 +14,8 @@ static function array<X2DataTemplate> CreateTemplates()
   Templates.AddItem(AddShotType('SUT_BurstShot', 1, eSUTFireMode_Burst));
   Templates.AddItem(AddShotType('SUT_AutoShot', 2, eSUTFireMode_Automatic));
   Templates.AddItem(AmbientSuppressionCancel());
+  Templates.AddItem(AddFollowShot('SUT_BurstFollowShot', eSUTFireMode_Burst));
+  Templates.AddItem(AddFollowShot('SUT_AutoFollowShot', eSUTFireMode_Automatic));
 
   return Templates;
 }
@@ -87,8 +89,8 @@ static function X2AbilityTemplate AddShotType(
 
 
 	// Damage Effect
-	WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage';
-	Template.AddTargetEffect(WeaponDamageEffect);
+	/* WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage'; */
+	/* Template.AddTargetEffect(WeaponDamageEffect); */
 
   SuppressionEffect = new class'SmallUnitTactics_Effect_AmbientSuppression';
   SuppressionEffect.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
@@ -102,10 +104,10 @@ static function X2AbilityTemplate AddShotType(
   /* SuppressionEffect.SetSourceDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, default.SuppressionSourceEffectDesc, Template.IconImage); */
   Template.AddTargetEffect(SuppressionEffect);
 
-  if (FireMode == eSUTFireMode_Burst || FireMode == eSUTFireMode_Automatic)
-  {
-    Template.AddMultiTargetEffect(WeaponDamageEffect);
-  }
+  /* if (FireMode == eSUTFireMode_Burst || FireMode == eSUTFireMode_Automatic) */
+  /* { */
+  /*   Template.AddMultiTargetEffect(WeaponDamageEffect); */
+  /* } */
 
 	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
   ToHitCalc.FireMode = FireMode;
@@ -113,10 +115,10 @@ static function X2AbilityTemplate AddShotType(
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
   Template.bIsASuppressionEffect = true;
 
-  BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst';
-  BurstMultiTarget.FireMode = FireMode;
-  BurstMultiTarget.bAllowSameTarget = true;
-  Template.AbilityMultiTargetStyle = BurstMultiTarget;
+  /* BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst'; */
+  /* BurstMultiTarget.FireMode = FireMode; */
+  /* BurstMultiTarget.bAllowSameTarget = true; */
+  /* Template.AbilityMultiTargetStyle = BurstMultiTarget; */
   // we will not use this soon, recursive ability calls ideal because
   // X2 doesn't really handle more than one projectile well in terms
   // of environ damage
@@ -146,6 +148,224 @@ static function X2AbilityTemplate AddShotType(
   Template.DamagePreviewFn = FireDamagePreview;
 
   Template.PostActivationEvents.AddItem('StandardShotActivated');
+
+  if (FireMode == eSUTFireMode_Burst)
+  {
+    Template.PostActivationEvents.AddItem('SUT_BurstFollowShot');
+  }
+  else if (FireMode == eSUTFireMode_Automatic)
+  {
+    Template.PostActivationEvents.AddItem('SUT_AutoFollowShot');
+  }
+
+  return Template;	
+}
+
+
+static function EventListenerReturn SingleShotListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
+{
+	local XComGameStateContext_Ability AbilityContext, HistoryAbilityContext;
+  local XComGameState_Unit Shooter;
+  local XComGameState_Item Weapon;
+	local XComGameState_Ability Ability, ShotAbility, HistoryAbility;
+  local XComGameStateHistory History;
+  local eSUTFireMode FireMode;
+  local name FireTemplate, TemplateName;
+  local object ContextObject;
+  local bool ReachedStart;
+  local int ix, ShotMax, ShotsFired;
+
+  `log("SINGLE SHOT LISTENER");
+  History = `XCOMHISTORY;
+	AbilityContext = XComGameStateContext_Ability(GameState.GetContext());
+	if (AbilityContext != none)
+	{
+    Ability = XComGameState_Ability(
+      `XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.AbilityRef.ObjectID)
+    );
+    TemplateName = Ability.GetMyTemplateName();
+    ShotsFired++;
+
+    if (
+      TemplateName != 'SUT_AutoFollowShot' &&
+      TemplateName != 'SUT_BurstFollowShot'
+    )
+    {
+      FireTemplate = Ability.GetMyTemplateName();
+      Shooter = XComGameState_Unit(
+        `XCOMHISTORY.GetGameStateForObjectID(Ability.OwnerStateObject.ObjectID)
+      );
+      Weapon = XComGameState_Item(
+        `XCOMHISTORY.GetGameStateForObjectID(Ability.SourceWeapon.ObjectID)
+      );
+    }
+    else
+    {
+      foreach History.IterateContextsByClassType(
+        class'XComGameStateContext_Ability', HistoryAbilityContext
+      )
+      {
+        HistoryAbility = XComGameState_Ability(
+          `XCOMHISTORY.GetGameStateForObjectID(HistoryAbilityContext.InputContext.AbilityRef.ObjectID)
+        );
+        TemplateName = HistoryAbility.GetMyTemplateName();
+        if (
+          TemplateName == 'SUT_AutoFollowShot' ||
+          TemplateName == 'SUT_BurstFollowShot'
+        )
+        {
+          `log("ShotsFired Increment");
+          ShotsFired++;
+        }
+        else if (
+          TemplateName == 'SUT_AutoShot' || TemplateName == 'SUT_BurstShot' ||
+          TemplateName == 'SUT_AimedShot' || TemplateName == 'SUT_SnapShot'
+        )
+        {
+          FireTemplate = HistoryAbility.GetMyTemplateName();
+          `log("Logged ability" @ FireTemplate);
+          Shooter = XComGameState_Unit(
+            `XCOMHISTORY.GetGameStateForObjectID(HistoryAbility.OwnerStateObject.ObjectID)
+          );
+          Weapon = XComGameState_Item(
+            `XCOMHISTORY.GetGameStateForObjectID(HistoryAbility.SourceWeapon.ObjectID)
+          );
+          break;
+        }
+      }
+    }
+
+    switch (FireTemplate)
+    {
+      case 'SUT_AutoShot': FireMode = eSUTFireMode_Automatic; break;
+      case 'SUT_BurstShot': FireMode = eSUTFireMode_Burst; break;
+      case 'SUT_SnapShot': FireMode = eSUTFireMode_Snap; break;
+      case 'SUT_AimedShot': FireMode = eSUTFireMode_Aimed; break;
+    }
+
+    ShotMax = class'SmallUnitTactics_WeaponManager'.static.GetShotCount(
+      Weapon.GetMyTemplateName(), FireMode
+    );
+
+    `log("ShotsMax Found" @ ShotMax);
+    if (FireMode == eSUTFireMode_Burst)
+    {
+      ShotAbility = XComGameState_Ability(
+        `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_BurstFollowShot').ObjectID)
+      );
+    }
+    else if (FireMode == eSUTFireMode_Automatic)
+    {
+      ShotAbility = XComGameState_Ability(
+        `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_AutoFollowShot').ObjectID)
+      );
+    }
+
+    /* `log("SingleShot Listener heard:" $ Ability.GetMyTemplateName()); */
+		/* /1* AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false); *1/ */
+
+    if (ShotsFired < ShotMax)
+    {
+      `log("Fired another shot");
+      ShotAbility.AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false);
+    } else {
+      `log("Shooting done");
+    }
+	}
+	return ELR_NoInterrupt;
+}
+
+
+static function X2AbilityTemplate AddFollowShot(
+  name AbilityName,
+  eSUTFireMode FireMode=eSUTFireMode_Aimed
+)
+{
+  local X2AbilityTemplate                 Template;	
+  local SmallUnitTactics_AbilityCost_BurstAmmoCost  AmmoCost;
+  local X2AbilityCost_ActionPoints        ActionPointCost;
+  local array<name>                       SkipExclusions;
+  local X2Effect_Knockback				KnockbackEffect;
+  local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
+  local X2Condition_Visibility            VisibilityCondition;
+  local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
+	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
+  local X2AbilityTrigger_EventListener  Trigger;
+	local SmallUnitTactics_AbilityToHitCalc_StandardAim    ToHitCalc;
+
+  // Macro to do localisation and stuffs
+  `CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
+
+  // Icon Properties
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_supression";
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.CLASS_LIEUTENANT_PRIORITY;
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+
+  SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+  SkipExclusions.AddItem(class'X2StatusEffects'.default.BurningName);
+  Template.AddShooterEffectExclusions(SkipExclusions);
+
+  // Targeting Details
+  // Can only shoot visible enemies
+  VisibilityCondition = new class'X2Condition_Visibility';
+  VisibilityCondition.bRequireGameplayVisible = true;
+  VisibilityCondition.bAllowSquadsight = true;
+  Template.AbilityTargetConditions.AddItem(VisibilityCondition);
+  // Can't target dead; Can't target friendlies
+  Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
+  // Can't shoot while dead
+  Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+  // Only at single targets that are in range.
+  Template.AbilityTargetStyle = default.SimpleSingleTarget;
+
+  Template.bAllowAmmoEffects = true;
+  Template.bAllowBonusWeaponEffects = true;
+  Template.bAllowFreeFireWeaponUpgrade = true;                        // Flag that permits action to become 'free action' via 'Hair Trigger' or similar upgrade / effects
+
+  //  Put holo target effect first because if the target dies from this shot, it will be too late to notify the effect.
+  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
+  //  Various Soldier ability specific effects - effects check for the ability before applying	
+  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
+
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.EventID = AbilityName;
+	Trigger.ListenerData.Filter = eFilter_Unit;
+	Trigger.ListenerData.EventFn = SingleShotListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+
+	// Damage Effect
+	WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage';
+	Template.AddTargetEffect(WeaponDamageEffect);
+
+	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
+  ToHitCalc.FireMode = FireMode;
+	Template.AbilityToHitCalc = ToHitCalc;
+	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
+  Template.bIsASuppressionEffect = true;
+
+  /* Template.AssociatedPassives.AddItem('HoloTargeting'); */
+
+  // MAKE IT LIVE!
+  Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+  Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;	
+  Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+
+  Template.bDisplayInUITooltip = false;
+  Template.bDisplayInUITacticalText = false;
+
+  Template.bUsesFiringCamera = true;
+  Template.CinescriptCameraType = "StandardGunFiring";	
+
+  KnockbackEffect = new class'X2Effect_Knockback';
+  KnockbackEffect.KnockbackDistance = 2;
+  KnockbackEffect.bUseTargetLocation = true;
+  Template.AddTargetEffect(KnockbackEffect);
+  Template.DamagePreviewFn = FireDamagePreview;
+  Template.PostActivationEvents.AddItem(AbilityName);
 
   return Template;	
 }
