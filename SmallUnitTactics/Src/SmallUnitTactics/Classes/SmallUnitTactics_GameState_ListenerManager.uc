@@ -90,6 +90,5 @@ function EventListenerReturn ToHitOverrideListener(Object EventData, Object Even
 	if(OverrideToHit.Id != 'FinalizeHitChance')
 		return ELR_NoInterrupt;
 
-  `log("Running override for HitChance");
 	return ELR_NoInterrupt;
 }

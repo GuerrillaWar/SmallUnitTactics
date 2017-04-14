@@ -166,6 +166,7 @@ static function LoadWeaponProfiles ()
 
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
       WeaponTemplate.Abilities.AddItem('SUT_AmbientSuppressionCancel');
+      WeaponTemplate.Abilities.AddItem('SUT_FinaliseAnimation');
       if (WeaponProfile.Aimed.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_AimedShot');

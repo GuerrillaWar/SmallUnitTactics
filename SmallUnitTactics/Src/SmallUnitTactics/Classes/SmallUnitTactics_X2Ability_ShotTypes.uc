@@ -16,6 +16,7 @@ static function array<X2DataTemplate> CreateTemplates()
   Templates.AddItem(AmbientSuppressionCancel());
   Templates.AddItem(AddFollowShot('SUT_BurstFollowShot', eSUTFireMode_Burst));
   Templates.AddItem(AddFollowShot('SUT_AutoFollowShot', eSUTFireMode_Automatic));
+  Templates.AddItem(AddAnimationAbility());
 
   return Templates;
 }
@@ -135,7 +136,7 @@ static function X2AbilityTemplate AddShotType(
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;	
+  Template.BuildVisualizationFn = NoOpVisualisation;
   Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
   Template.bDisplayInUITooltip = false;
@@ -157,12 +158,16 @@ static function X2AbilityTemplate AddShotType(
   {
     Template.PostActivationEvents.AddItem('SUT_AutoFollowShot');
   }
+  else
+  {
+    Template.PostActivationEvents.AddItem('SUT_FinaliseAnimation');
+  }
 
   return Template;	
 }
 
 
-static function EventListenerReturn SingleShotListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
+static function EventListenerReturn MultiShotListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
 {
 	local XComGameStateContext_Ability AbilityContext, HistoryAbilityContext;
   local XComGameState_Unit Shooter;
@@ -175,7 +180,7 @@ static function EventListenerReturn SingleShotListener(Object EventData, Object 
   local bool ReachedStart;
   local int ix, ShotMax, ShotsFired;
 
-  `log("SINGLE SHOT LISTENER");
+  `log("MULTI SHOT LISTENER");
   History = `XCOMHISTORY;
 	AbilityContext = XComGameStateContext_Ability(GameState.GetContext());
 	if (AbilityContext != none)
@@ -248,29 +253,29 @@ static function EventListenerReturn SingleShotListener(Object EventData, Object 
     );
 
     `log("ShotsMax Found" @ ShotMax);
-    if (FireMode == eSUTFireMode_Burst)
+    if (ShotsFired >= ShotMax)
     {
+      ShotAbility = XComGameState_Ability(
+        `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_FinaliseAnimation').ObjectID)
+      );
+      `log("Shooting done, getting ready to call:" @ ShotAbility.ObjectID);
+    }
+    else if (FireMode == eSUTFireMode_Burst)
+    {
+      `log("Fired another burst shot");
       ShotAbility = XComGameState_Ability(
         `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_BurstFollowShot').ObjectID)
       );
     }
     else if (FireMode == eSUTFireMode_Automatic)
     {
+      `log("Fired another auto shot");
       ShotAbility = XComGameState_Ability(
         `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_AutoFollowShot').ObjectID)
       );
     }
 
-    /* `log("SingleShot Listener heard:" $ Ability.GetMyTemplateName()); */
-		/* /1* AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false); *1/ */
-
-    if (ShotsFired < ShotMax)
-    {
-      `log("Fired another shot");
-      ShotAbility.AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false);
-    } else {
-      `log("Shooting done");
-    }
+    ShotAbility.AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false);
 	}
 	return ELR_NoInterrupt;
 }
@@ -334,7 +339,7 @@ static function X2AbilityTemplate AddFollowShot(
 	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
 	Trigger.ListenerData.EventID = AbilityName;
 	Trigger.ListenerData.Filter = eFilter_Unit;
-	Trigger.ListenerData.EventFn = SingleShotListener;
+	Trigger.ListenerData.EventFn = MultiShotListener;
 	Template.AbilityTriggers.AddItem(Trigger);
 
 	// Damage Effect
@@ -351,7 +356,7 @@ static function X2AbilityTemplate AddFollowShot(
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;	
+  Template.BuildVisualizationFn = NoOpVisualisation;
   Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
   Template.bDisplayInUITooltip = false;
@@ -479,4 +484,195 @@ static function X2AbilityTemplate AmbientSuppressionCancel() {
 
 simulated function NoOpVisualisation(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
 {
+}
+
+
+static function EventListenerReturn SingleShotListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
+{
+	local XComGameStateContext_Ability AbilityContext;
+  local XComGameState_Unit Shooter;
+	local XComGameState_Ability Ability, ShotAbility;
+  local XComGameStateHistory History;
+
+  History = `XCOMHISTORY;
+	AbilityContext = XComGameStateContext_Ability(GameState.GetContext());
+	if (AbilityContext != none)
+	{
+    Ability = XComGameState_Ability(
+      `XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.AbilityRef.ObjectID)
+    );
+    Shooter = XComGameState_Unit(
+      `XCOMHISTORY.GetGameStateForObjectID(Ability.OwnerStateObject.ObjectID)
+    );
+    ShotAbility = XComGameState_Ability(
+      `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_FinaliseAnimation').ObjectID)
+    );
+
+    ShotAbility.AbilityTriggerAgainstSingleTarget(AbilityContext.InputContext.PrimaryTarget, false);
+	}
+	return ELR_NoInterrupt;
+}
+
+
+static function X2AbilityTemplate AddAnimationAbility()
+{
+  local X2AbilityTemplate                 Template;	
+  local SmallUnitTactics_AbilityCost_BurstAmmoCost  AmmoCost;
+  local X2AbilityCost_ActionPoints        ActionPointCost;
+  local array<name>                       SkipExclusions;
+  local X2Effect_Knockback				KnockbackEffect;
+  local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
+  local X2Condition_Visibility            VisibilityCondition;
+  local SmallUnitTactics_X2AbilityMultiTarget_Burst BurstMultiTarget;
+	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
+  local X2AbilityTrigger_EventListener  Trigger;
+	local SmallUnitTactics_AbilityToHitCalc_StandardAim    ToHitCalc;
+
+  // Macro to do localisation and stuffs
+  `CREATE_X2ABILITY_TEMPLATE(Template, 'SUT_FinaliseAnimation');
+
+  // Icon Properties
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_supression";
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.CLASS_LIEUTENANT_PRIORITY;
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+
+  SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+  SkipExclusions.AddItem(class'X2StatusEffects'.default.BurningName);
+  /* Template.AddShooterEffectExclusions(SkipExclusions); */
+
+  // Targeting Details
+  // Can only shoot visible enemies
+  VisibilityCondition = new class'X2Condition_Visibility';
+  VisibilityCondition.bRequireGameplayVisible = true;
+  VisibilityCondition.bAllowSquadsight = true;
+  Template.AbilityTargetConditions.AddItem(VisibilityCondition);
+  // Can't target dead; Can't target friendlies
+  Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
+  // Can't shoot while dead
+  Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+  // Only at single targets that are in range.
+  Template.AbilityTargetStyle = default.SimpleSingleTarget;
+
+  Template.bAllowAmmoEffects = true;
+  Template.bAllowBonusWeaponEffects = true;
+  Template.bAllowFreeFireWeaponUpgrade = true;                        // Flag that permits action to become 'free action' via 'Hair Trigger' or similar upgrade / effects
+
+  //  Put holo target effect first because if the target dies from this shot, it will be too late to notify the effect.
+  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
+  //  Various Soldier ability specific effects - effects check for the ability before applying	
+  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
+
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.EventID = 'SUT_FinaliseAnimation';
+	Trigger.ListenerData.Filter = eFilter_Unit;
+	Trigger.ListenerData.EventFn = SingleShotListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+
+	// Damage Effect
+
+  // MAKE IT LIVE!
+  Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+  Template.BuildVisualizationFn = AssembleFiringVisualisation;
+  Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+
+  Template.bDisplayInUITooltip = false;
+  Template.bDisplayInUITacticalText = false;
+
+  Template.bUsesFiringCamera = true;
+  Template.CinescriptCameraType = "StandardGunFiring";	
+
+  return Template;	
+}
+
+
+simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+{
+	local XComGameStateHistory      History;
+	local XComGameStateContext_Ability  Context;
+	local Array<XComGameStateContext_Ability>  ShotContexts;
+	local VisualizationTrack        EmptyTrack;
+	local VisualizationTrack        BuildTrack;
+	local VisualizationTrack        SourceTrack;
+	local X2Action_Fire                 FireAction;
+
+  local name TemplateName;
+	local StateObjectReference          ShootingUnitRef;	
+	local Actor                     TargetVisualizer, ShooterVisualizer;
+	local X2VisualizerInterface     TargetVisualizerInterface;
+
+	local XComGameStateContext_Ability HistoryAbilityContext, ShotContext;
+  local XComGameState_Unit Shooter;
+  local XComGameState_Item Weapon;
+	local XComGameState_Ability Ability, ShotAbility, HistoryAbility;
+
+	local X2Action_StartCinescriptCamera CinescriptStartAction;
+	local X2Action_EndCinescriptCamera   CinescriptEndAction;
+	local X2Camera_Cinescript            CinescriptCamera;
+
+	History = `XCOMHISTORY;
+	Context = XComGameStateContext_Ability(VisualizeGameState.GetContext());
+
+  `log("Inside the AssembleFiringVisualisation method");
+
+	ShootingUnitRef = Context.InputContext.SourceObject;
+
+	ShooterVisualizer = History.GetVisualizer(ShootingUnitRef.ObjectID);
+	ShooterVisualizer = History.GetVisualizer(ShootingUnitRef.ObjectID);
+
+	SourceTrack = EmptyTrack;
+	SourceTrack.StateObject_OldState = History.GetGameStateForObjectID(ShootingUnitRef.ObjectID, eReturnType_Reference, VisualizeGameState.HistoryIndex - 1);
+	SourceTrack.StateObject_NewState = VisualizeGameState.GetGameStateForObjectID(ShootingUnitRef.ObjectID);
+	if (SourceTrack.StateObject_NewState == none)
+		SourceTrack.StateObject_NewState = SourceTrack.StateObject_OldState;
+	SourceTrack.TrackActor = ShooterVisualizer;
+
+
+  foreach History.IterateContextsByClassType(
+    class'XComGameStateContext_Ability', HistoryAbilityContext
+  )
+  {
+    HistoryAbility = XComGameState_Ability(
+      `XCOMHISTORY.GetGameStateForObjectID(HistoryAbilityContext.InputContext.AbilityRef.ObjectID)
+    );
+    TemplateName = HistoryAbility.GetMyTemplateName();
+    if (
+      TemplateName == 'SUT_AutoFollowShot' ||
+      TemplateName == 'SUT_BurstFollowShot'
+    )
+    {
+      ShotContexts.InsertItem(0, HistoryAbilityContext);
+    }
+    else if (
+      TemplateName == 'SUT_AutoShot' || TemplateName == 'SUT_BurstShot' ||
+      TemplateName == 'SUT_AimedShot' || TemplateName == 'SUT_SnapShot'
+    )
+    {
+      ShotContexts.InsertItem(0, HistoryAbilityContext);
+      break;
+    }
+  }
+
+
+	CinescriptCamera = class'X2Camera_Cinescript'.static.CreateCinescriptCameraForAbility(Context);
+	CinescriptStartAction = X2Action_StartCinescriptCamera( class'X2Action_StartCinescriptCamera'.static.AddToVisualizationTrack(SourceTrack, Context ) );
+	CinescriptStartAction.CinescriptCamera = CinescriptCamera;
+
+	class'X2Action_ExitCover'.static.AddToVisualizationTrack(SourceTrack, Context);
+  foreach ShotContexts(ShotContext)
+  {
+    FireAction = X2Action_Fire(class'X2Action_Fire'.static.AddToVisualizationTrack(SourceTrack, ShotContext));
+    FireAction.SetFireParameters(ShotContext.IsResultContextHit(), , false);
+  }
+	class'X2Action_EnterCover'.static.AddToVisualizationTrack(SourceTrack, Context);
+
+
+	// Add an action to pop the last CinescriptCamera off the camera stack.
+	CinescriptEndAction = X2Action_EndCinescriptCamera( class'X2Action_EndCinescriptCamera'.static.AddToVisualizationTrack( SourceTrack, Context ) );
+	CinescriptEndAction.CinescriptCamera = CinescriptCamera;
+
+	OutVisualizationTracks.AddItem(SourceTrack);
 }
