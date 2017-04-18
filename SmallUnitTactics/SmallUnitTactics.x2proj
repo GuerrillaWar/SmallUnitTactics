@@ -10,6 +10,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <AssemblyName>SmallUnitTactics</AssemblyName>
     <RootNamespace>SmallUnitTactics</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Config\" />
     <Folder Include="Content\" />

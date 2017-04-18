@@ -3,15 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # XCOM ModBuddy Solution File, Format Version 11.00
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "SmallUnitTactics", "SmallUnitTactics\SmallUnitTactics.x2proj", "{9E0CAA35-7830-4A61-889B-3A36BD212AD6}"
+Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "SmallUnitTactics", "SmallUnitTactics\SmallUnitTactics.x2proj", "{4A411F17-6620-408E-AE86-C54F9DDBE65C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|XCOM 2 = Debug|XCOM 2
 		Default|XCOM 2 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9E0CAA35-7830-4A61-889B-3A36BD212AD6}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
-		{9E0CAA35-7830-4A61-889B-3A36BD212AD6}.Default|XCOM 2.Build.0 = Default|XCOM 2
+		{4A411F17-6620-408E-AE86-C54F9DDBE65C}.Debug|XCOM 2.ActiveCfg = Debug|XCOM 2
+		{4A411F17-6620-408E-AE86-C54F9DDBE65C}.Debug|XCOM 2.Build.0 = Debug|XCOM 2
+		{4A411F17-6620-408E-AE86-C54F9DDBE65C}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
+		{4A411F17-6620-408E-AE86-C54F9DDBE65C}.Default|XCOM 2.Build.0 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
