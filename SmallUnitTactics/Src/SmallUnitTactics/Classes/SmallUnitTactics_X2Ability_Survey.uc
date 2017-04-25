@@ -1,4 +1,6 @@
-class SmallUnitTactics_X2Ability_Survey extends X2Ability;
+class SmallUnitTactics_X2Ability_Survey extends X2Ability config(SmallUnitTactics);
+
+var config int SurveySightRadiusBoost;
 
 var localized string SurveyEffectName;
 var localized string SurveyEffectDescription;
@@ -43,9 +45,11 @@ static function X2AbilityTemplate AddSurvey() {
   ActionPointCost.bConsumeAllPoints = true;
   Template.AbilityCosts.AddItem(ActionPointCost);	
 
+  `log("SmallUnitTactics.SurveySightRadiusBoost:" @ default.SurveySightRadiusBoost);
+
   StatChange = new class'X2Effect_PersistentStatChange';
   StatChange.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
-  StatChange.AddPersistentStatChange(eStat_SightRadius, 20);
+  StatChange.AddPersistentStatChange(eStat_SightRadius, default.SurveySightRadiusBoost);
   StatChange.bRemoveWhenTargetDies = true;
   StatChange.bRemoveWhenSourceDamaged = true;
   StatChange.SetSourceDisplayInfo(ePerkBuff_Bonus, default.SurveyEffectName, default.SurveyEffectDescription, Template.IconImage);
