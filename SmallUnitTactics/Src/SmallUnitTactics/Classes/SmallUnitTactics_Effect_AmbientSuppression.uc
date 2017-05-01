@@ -37,19 +37,8 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	local XComGameState_Unit SourceUnit, TargetUnit;
 	local XComGameStateContext_Ability AbilityContext;
 
-	// pulled out of X2Effect_Persistent because overrides MUST be subclasses
-	if (EffectAddedFn != none)
-		EffectAddedFn(self, ApplyEffectParameters, kNewTargetState, NewGameState);
-
-	if (bTickWhenApplied)
-	{
-		if (NewEffectState != none)
-		{
-			if (!NewEffectState.TickEffect(NewGameState, true))
-				NewEffectState.RemoveEffect(NewGameState, NewGameState, false, true);
-		}
-	}
-	// end extraction out of X2Effect_Persistent because overrides MUST be subclasses
+	// override X2Effect_Sppression code, but not X2Effect_Persistent one
+	super(X2Effect_Persistent).OnEffectAdded(ApplyEffectParameters, kNewTargetState, NewGameState, NewEffectState);
 
 	TargetUnit = XComGameState_Unit(kNewTargetState);
 	SourceUnit = XComGameState_Unit(NewGameState.CreateStateObject(class'XComGameState_Unit', ApplyEffectParameters.SourceStateObjectRef.ObjectID));

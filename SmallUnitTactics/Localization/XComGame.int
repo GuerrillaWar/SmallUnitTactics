@@ -14,10 +14,6 @@ LocHelpText="Take a burst shot at the target."
 LocFriendlyName="Automatic Fire"
 LocHelpText="Lay prolonged fire at the target."
 
-[SUT_AutoShot X2AbilityTemplate]
-LocFriendlyName="Automatic Fire"
-LocHelpText="Lay prolonged fire at the target."
-
 [SUT_Survey X2AbilityTemplate]
 LocFriendlyName="Survey"
 LocHelpText="Spend the turn observing the battlefield, boosting your sight radius."
