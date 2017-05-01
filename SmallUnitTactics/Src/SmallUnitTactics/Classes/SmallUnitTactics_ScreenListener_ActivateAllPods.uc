@@ -26,12 +26,6 @@ private function OnNewGameState(XComGameState newGameState)
     }
 }
 
-defaultProperties
-{
-    ScreenClass = UITacticalHUD
-}
-
-
 function AlertIfPlayerRevealed() {
     local XComGameStateHistory History;
 	local XComGameState_Unit UnitState;
@@ -65,3 +59,7 @@ function AlertAllUnits(XComGameState_Unit Unit)
 }
 
 
+defaultproperties
+{
+    ScreenClass = class'UITacticalHUD'
+}
