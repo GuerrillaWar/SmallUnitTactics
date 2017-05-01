@@ -41,7 +41,7 @@ static function X2AbilityTemplate AddSurvey() {
 
   // Action Point
   ActionPointCost = new class'X2AbilityCost_ActionPoints';
-  ActionPointCost.iNumPoints = 2;
+  ActionPointCost.iNumPoints = 1;
   ActionPointCost.bConsumeAllPoints = true;
   Template.AbilityCosts.AddItem(ActionPointCost);	
 
