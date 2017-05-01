@@ -32,6 +32,7 @@ static function X2AbilityTemplate AddShotType(
   local array<name>                       SkipExclusions;
   local X2Effect_Knockback				KnockbackEffect;
   local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
+	local X2Effect_ApplyWeaponDamage        WeaponDamageEffect;
   local X2Condition_Visibility            VisibilityCondition;
 	local SmallUnitTactics_AbilityToHitCalc_StandardAim    ToHitCalc;
 
@@ -85,7 +86,7 @@ static function X2AbilityTemplate AddShotType(
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
   //  Various Soldier ability specific effects - effects check for the ability before applying	
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
-
+	Template.AddTargetEffect(default.WeaponUpgradeMissDamage);
 
 	// Damage Effect
 	/* WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage'; */
@@ -103,28 +104,12 @@ static function X2AbilityTemplate AddShotType(
   /* SuppressionEffect.SetSourceDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, default.SuppressionSourceEffectDesc, Template.IconImage); */
   Template.AddTargetEffect(SuppressionEffect);
 
-  /* if (FireMode == eSUTFireMode_Burst || FireMode == eSUTFireMode_Automatic) */
-  /* { */
-  /*   Template.AddMultiTargetEffect(WeaponDamageEffect); */
-  /* } */
-
 	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
   ToHitCalc.FireMode = FireMode;
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
   Template.bIsASuppressionEffect = true;
 
-  /* BurstMultiTarget = new class'SmallUnitTactics_X2AbilityMultiTarget_Burst'; */
-  /* BurstMultiTarget.FireMode = FireMode; */
-  /* BurstMultiTarget.bAllowSameTarget = true; */
-  /* Template.AbilityMultiTargetStyle = BurstMultiTarget; */
-  // we will not use this soon, recursive ability calls ideal because
-  // X2 doesn't really handle more than one projectile well in terms
-  // of environ damage
-  /* BurstFireMultiTarget = new class'X2AbilityMultiTarget_BurstFire'; */
-  /* BurstFireMultiTarget.NumExtraShots = 4; */
-  /* Template.AbilityMultiTargetStyle = BurstFireMultiTarget; */
-    
   // Targeting Method
   Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
   Template.bUsesFiringCamera = true;
@@ -134,7 +119,7 @@ static function X2AbilityTemplate AddShotType(
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = NoOpVisualisation;
+  Template.BuildVisualizationFn = FirstShot_BuildVisualization;
   Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
   Template.bDisplayInUITooltip = false;
@@ -165,10 +150,58 @@ static function X2AbilityTemplate AddShotType(
 }
 
 
+simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+{
+	local XComGameStateContext_Ability AbilityContext;
+	local XComGameStateContext Context;
+	local XComGameStateContext_Ability TestAbilityContext;
+	local int EventChainIndex, TrackIndex, ActionIndex;
+	local XComGameStateHistory History;
+	local X2Action_EnterCover EnterCoverAction;
+	local X2Action_EndCinescriptCamera EndCinescriptCameraAction;
+  local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
+
+	// Build the first shot of Rapid Fire's visualization
+	TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
+
+	Context = VisualizeGameState.GetContext();
+	AbilityContext = XComGameStateContext_Ability(Context);
+
+  for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
+  {
+    if( OutVisualizationTracks[TrackIndex].StateObject_NewState.ObjectID == AbilityContext.InputContext.SourceObject.ObjectID)
+    {
+      // Found the Source track
+      break;
+    }
+  }
+
+  for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
+  {
+    EnterCoverAction = X2Action_EnterCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    EndCinescriptCameraAction = X2Action_EndCinescriptCamera(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    if (
+      (EnterCoverAction != none) ||
+      (EndCinescriptCameraAction != none)
+    )
+    {
+      OutVisualizationTracks[TrackIndex].TrackActions.Remove(ActionIndex, 1);
+    }
+  }
+  ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
+    class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
+      Context, OutVisualizationTracks[TrackIndex].TrackActor
+    )
+  );
+  OutVisualizationTracks[TrackIndex].TrackActions.AddItem(ManualRunAction);
+}
+
+
+
 static function EventListenerReturn MultiShotListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
 {
 	local XComGameStateContext_Ability AbilityContext, HistoryAbilityContext;
-  local XComGameState_Unit Shooter;
+  local XComGameState_Unit Shooter, Target;
   local XComGameState_Item Weapon;
 	local XComGameState_Ability Ability, ShotAbility, HistoryAbility;
   local XComGameStateHistory History;
@@ -183,6 +216,9 @@ static function EventListenerReturn MultiShotListener(Object EventData, Object E
 	{
     Ability = XComGameState_Ability(
       `XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.AbilityRef.ObjectID)
+    );
+    Target = XComGameState_Unit(
+      `XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.PrimaryTarget.ObjectID)
     );
     TemplateName = Ability.GetMyTemplateName();
     ShotsFired++;
@@ -249,7 +285,7 @@ static function EventListenerReturn MultiShotListener(Object EventData, Object E
     );
 
     `log("ShotsMax Found" @ ShotMax);
-    if (ShotsFired >= ShotMax)
+    if (ShotsFired >= ShotMax || Target.IsDead())
     {
       ShotAbility = XComGameState_Ability(
         `XCOMHISTORY.GetGameStateForObjectID(Shooter.FindAbility('SUT_FinaliseAnimation').ObjectID)
@@ -312,7 +348,6 @@ static function X2AbilityTemplate AddFollowShot(
   VisibilityCondition.bAllowSquadsight = true;
   Template.AbilityTargetConditions.AddItem(VisibilityCondition);
   // Can't target dead; Can't target friendlies
-  Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
   // Can't shoot while dead
   Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
   // Only at single targets that are in range.
@@ -324,8 +359,9 @@ static function X2AbilityTemplate AddFollowShot(
 
   //  Put holo target effect first because if the target dies from this shot, it will be too late to notify the effect.
   // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
-  //  Various Soldier ability specific effects - effects check for the ability before applying	
-  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
+  //  Various Soldier ability specific effects - effects check for the ability before applying
+  Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
+	Template.AddTargetEffect(default.WeaponUpgradeMissDamage);
 
 	Trigger = new class'X2AbilityTrigger_EventListener';
 	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
@@ -333,10 +369,6 @@ static function X2AbilityTemplate AddFollowShot(
 	Trigger.ListenerData.Filter = eFilter_Unit;
 	Trigger.ListenerData.EventFn = MultiShotListener;
 	Template.AbilityTriggers.AddItem(Trigger);
-
-	// Damage Effect
-	WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage';
-	Template.AddTargetEffect(WeaponDamageEffect);
 
 	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
   ToHitCalc.FireMode = FireMode;
@@ -348,7 +380,7 @@ static function X2AbilityTemplate AddFollowShot(
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = NoOpVisualisation;
+  Template.BuildVisualizationFn = FollowShot_BuildVisualization;
   Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
   Template.bDisplayInUITooltip = false;
@@ -365,6 +397,59 @@ static function X2AbilityTemplate AddFollowShot(
   Template.PostActivationEvents.AddItem(AbilityName);
 
   return Template;	
+}
+
+
+
+simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+{
+	local XComGameStateContext Context;
+	local XComGameStateContext_Ability AbilityContext;
+	local int TrackIndex, ActionIndex;
+	local X2Action_ExitCover ExitCoverAction;
+	local X2Action_EnterCover EnterCoverAction;
+	local X2Action_StartCinescriptCamera StartCinescriptCameraAction;
+	local X2Action_EndCinescriptCamera EndCinescriptCameraAction;
+  local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
+
+	// Build the first shot of Rapid Fire's visualization
+	TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
+
+	Context = VisualizeGameState.GetContext();
+	AbilityContext = XComGameStateContext_Ability(Context);
+
+	for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
+	{
+		if( OutVisualizationTracks[TrackIndex].StateObject_NewState.ObjectID == AbilityContext.InputContext.SourceObject.ObjectID)
+		{
+			// Found the Source track
+			break;
+		}
+	}
+
+	for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
+	{
+		ExitCoverAction = X2Action_ExitCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+		EnterCoverAction = X2Action_EnterCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+		StartCinescriptCameraAction = X2Action_StartCinescriptCamera(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    EndCinescriptCameraAction = X2Action_EndCinescriptCamera(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+		if (
+      (ExitCoverAction != none) ||
+      (StartCinescriptCameraAction != none) ||
+      (EndCinescriptCameraAction != none) ||
+      (EnterCoverAction != none)
+    )
+		{
+			OutVisualizationTracks[TrackIndex].TrackActions.Remove(ActionIndex, 1);
+		}
+	}
+
+  ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
+    class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
+      Context, OutVisualizationTracks[TrackIndex].TrackActor
+    )
+  );
+  OutVisualizationTracks[TrackIndex].TrackActions.AddItem(ManualRunAction);
 }
 
 
@@ -442,10 +527,6 @@ static function X2AbilityTemplate AmbientSuppressionCancel() {
 
   // Targeting Details
   // Can only shoot visible enemies
-  VisibilityCondition = new class'X2Condition_Visibility';
-  VisibilityCondition.bRequireGameplayVisible = true;
-  VisibilityCondition.bAllowSquadsight = true;
-  Template.AbilityTargetConditions.AddItem(VisibilityCondition);
   // Can't target dead; Can't target friendlies
   Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
   // Can't shoot while dead
@@ -540,8 +621,6 @@ static function X2AbilityTemplate AddAnimationAbility()
   VisibilityCondition.bRequireGameplayVisible = true;
   VisibilityCondition.bAllowSquadsight = true;
   Template.AbilityTargetConditions.AddItem(VisibilityCondition);
-  // Can't target dead; Can't target friendlies
-  Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
   // Can't shoot while dead
   Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
   // Only at single targets that are in range.
@@ -567,7 +646,7 @@ static function X2AbilityTemplate AddAnimationAbility()
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = AssembleFiringVisualisation;
+  Template.BuildVisualizationFn = Finalize_BuildVisualization;
   Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
   Template.bDisplayInUITooltip = false;
@@ -580,17 +659,17 @@ static function X2AbilityTemplate AddAnimationAbility()
 }
 
 
-simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+simulated function Finalize_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
 {
 	local XComGameStateHistory      History;
 	local XComGameStateContext_Ability  Context;
   local XComGameState             ShotGameState;
 
 	local AbilityInputContext           AbilityContext;
-	local Array<XComGameStateContext_Ability>  ShotContexts;
+	local Array<XComGameStateContext_Ability>  ShotContexts, HitContexts, MissContexts;
 	local VisualizationTrack        EmptyTrack;
 	local VisualizationTrack        BuildTrack;
-	local VisualizationTrack        SourceTrack;
+	local VisualizationTrack        SourceTrack, TargetTrack;
 	local X2Action_Fire                 FireAction;
 
 	local X2AmmoTemplate                AmmoTemplate;
@@ -603,6 +682,7 @@ simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState,
 
 	local XComGameStateContext_Ability HistoryAbilityContext, ShotContext;
   local XComGameState_Item SourceWeapon;
+  local XComGameState_Unit TargetStartState, TargetEndState;
 	local XComGameState_Ability ShotAbility, HistoryAbility, AbilityState;
 	local X2AbilityTemplate ShotAbilityTemplate;
   local bool AnyHits;
@@ -613,19 +693,18 @@ simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState,
 	local XComGameState_WorldEffectTileData WorldDataUpdate;
 
 	/* local X2Action_PlaySoundAndFlyOver SoundAndFlyover; */
+  local X2Action_ApplyWeaponDamageToUnit ApplyWeaponDamageToUnit;
 	local name         ApplyResult;
 
 	local X2Action_StartCinescriptCamera CinescriptStartAction;
 	local X2Action_EndCinescriptCamera   CinescriptEndAction;
 	local X2Camera_Cinescript            CinescriptCamera;
-  local int EffectIndex;
+  local int EffectIndex, FirstHistoryIndex;
 
 	History = `XCOMHISTORY;
 	Context = XComGameStateContext_Ability(VisualizeGameState.GetContext());
 	AbilityContext = Context.InputContext;
 	AbilityState = XComGameState_Ability(History.GetGameStateForObjectID(AbilityContext.AbilityRef.ObjectID));
-
-  `log("Inside the AssembleFiringVisualisation method");
 
 	ShootingUnitRef = Context.InputContext.SourceObject;
 
@@ -633,7 +712,7 @@ simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState,
 	ShooterVisualizerInterface = X2VisualizerInterface(ShooterVisualizer);
 
 	SourceTrack = EmptyTrack;
-	SourceTrack.StateObject_OldState = History.GetGameStateForObjectID(ShootingUnitRef.ObjectID, eReturnType_Reference, VisualizeGameState.HistoryIndex - 1);
+	SourceTrack.StateObject_OldState = History.GetGameStateForObjectID(ShootingUnitRef.ObjectID, eReturnType_Reference, VisualizeGameState.HistoryIndex);
 	SourceTrack.StateObject_NewState = VisualizeGameState.GetGameStateForObjectID(ShootingUnitRef.ObjectID);
 	if (SourceTrack.StateObject_NewState == none)
 		SourceTrack.StateObject_NewState = SourceTrack.StateObject_OldState;
@@ -646,222 +725,7 @@ simulated function AssembleFiringVisualisation(XComGameState VisualizeGameState,
 		AmmoTemplate = X2AmmoTemplate(SourceWeapon.GetLoadedAmmoTemplate(AbilityState));
 	}
 
-
-  foreach History.IterateContextsByClassType(
-    class'XComGameStateContext_Ability', HistoryAbilityContext
-  )
-  {
-    HistoryAbility = XComGameState_Ability(
-      `XCOMHISTORY.GetGameStateForObjectID(HistoryAbilityContext.InputContext.AbilityRef.ObjectID)
-    );
-    TemplateName = HistoryAbility.GetMyTemplateName();
-    if (
-      TemplateName == 'SUT_AutoFollowShot' ||
-      TemplateName == 'SUT_BurstFollowShot'
-    )
-    {
-      ShotContexts.InsertItem(0, HistoryAbilityContext);
-    }
-    else if (
-      TemplateName == 'SUT_AutoShot' || TemplateName == 'SUT_BurstShot' ||
-      TemplateName == 'SUT_AimedShot' || TemplateName == 'SUT_SnapShot'
-    )
-    {
-      ShotContexts.InsertItem(0, HistoryAbilityContext);
-      break;
-    }
-  }
-
-
-	CinescriptCamera = class'X2Camera_Cinescript'.static.CreateCinescriptCameraForAbility(Context);
-	CinescriptStartAction = X2Action_StartCinescriptCamera( class'X2Action_StartCinescriptCamera'.static.AddToVisualizationTrack(SourceTrack, Context ) );
-	CinescriptStartAction.CinescriptCamera = CinescriptCamera;
-
-	class'X2Action_ExitCover'.static.AddToVisualizationTrack(SourceTrack, Context);
-  foreach ShotContexts(ShotContext)
-  {
-    ShotGameState = ShotContext.AssociatedState;
-    FireAction = X2Action_Fire(class'X2Action_Fire'.static.AddToVisualizationTrack(SourceTrack, ShotContext));
-    FireAction.SetFireParameters(ShotContext.IsResultContextHit(), , false);
-
-    if (ShotContext.IsResultContextHit())
-    {
-      AnyHits = true;
-    }
-
-    // TargetTrack
-    TargetVisualizer = History.GetVisualizer(ShotContext.InputContext.PrimaryTarget.ObjectID);
-    TargetVisualizerInterface = X2VisualizerInterface(TargetVisualizer);
-
-    BuildTrack = EmptyTrack;
-    BuildTrack.TrackActor = TargetVisualizer;
-    TargetStateObject = ShotGameState.GetGameStateForObjectID(AbilityContext.PrimaryTarget.ObjectID);
-
-    if( TargetStateObject != none )
-    {
-      History.GetCurrentAndPreviousGameStatesForObjectID(ShotContext.InputContext.PrimaryTarget.ObjectID, 
-                                 BuildTrack.StateObject_OldState, BuildTrack.StateObject_NewState,
-                                 eReturnType_Reference,
-                                 ShotGameState.HistoryIndex);
-      `assert(BuildTrack.StateObject_NewState == TargetStateObject);
-    }
-    else
-    {
-      //If TargetStateObject is none, it means that the visualize game state does not contain an entry for the primary target. Use the history version
-      //and show no change.
-      BuildTrack.StateObject_OldState = History.GetGameStateForObjectID(ShotContext.InputContext.PrimaryTarget.ObjectID);
-      BuildTrack.StateObject_NewState = BuildTrack.StateObject_OldState;
-    }
-
-    //Make the target wait until signaled by the shooter that the projectiles are hitting
-    class'X2Action_WaitForAbilityEffect'.static.AddToVisualizationTrack(BuildTrack, ShotContext);
-    
-    //Add any X2Actions that are specific to this effect being applied. These actions would typically be instantaneous, showing UI world messages
-    //playing any effect specific audio, starting effect specific effects, etc. However, they can also potentially perform animations on the 
-    //track actor, so the design of effect actions must consider how they will look/play in sequence with other effects.
-    ShotAbility = XComGameState_Ability(
-      `XCOMHISTORY.GetGameStateForObjectID(ShotContext.InputContext.AbilityRef.ObjectID)
-    );
-    ShotAbilityTemplate = ShotAbility.GetMyTemplate();
-
-    for (EffectIndex = 0; EffectIndex < ShotAbilityTemplate.AbilityTargetEffects.Length; ++EffectIndex)
-    {
-      ApplyResult = ShotContext.FindTargetEffectApplyResult(ShotAbilityTemplate.AbilityTargetEffects[EffectIndex]);
-
-      `log("AbilityTarget Effect:" @ ApplyResult @ ShotAbility.GetMyTemplateName());
-      // Target effect visualization
-      ShotAbilityTemplate.AbilityTargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, ApplyResult);
-
-      // Source effect visualization
-      ShotAbilityTemplate.AbilityTargetEffects[EffectIndex].AddX2ActionsForVisualizationSource(ShotGameState, SourceTrack, ApplyResult);
-    }
-
-    //the following is used to handle Rupture flyover text
-    if (XComGameState_Unit(BuildTrack.StateObject_OldState).GetRupturedValue() == 0 &&
-      XComGameState_Unit(BuildTrack.StateObject_NewState).GetRupturedValue() > 0)
-    {
-      //this is the frame that we realized we've been ruptured!
-      class 'X2StatusEffects'.static.RuptureVisualization(ShotGameState, BuildTrack);
-    }
-
-    ShotAbilityTemplate = ShotAbility.GetMyTemplate();
-
-    if (ShotAbilityTemplate.bAllowAmmoEffects && AmmoTemplate != None)
-    {
-      for (EffectIndex = 0; EffectIndex < AmmoTemplate.TargetEffects.Length; ++EffectIndex)
-      {
-        ApplyResult = ShotContext.FindTargetEffectApplyResult(AmmoTemplate.TargetEffects[EffectIndex]);
-        `log("AmmoEffect Effect:" @ ApplyResult @ ShotAbility.GetMyTemplateName());
-        AmmoTemplate.TargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, ApplyResult);
-        AmmoTemplate.TargetEffects[EffectIndex].AddX2ActionsForVisualizationSource(ShotGameState, SourceTrack, ApplyResult);
-      }
-    }
-    if (ShotAbilityTemplate.bAllowBonusWeaponEffects && WeaponTemplate != none)
-    {
-      for (EffectIndex = 0; EffectIndex < WeaponTemplate.BonusWeaponEffects.Length; ++EffectIndex)
-      {
-        `log("BonusWeapon Effect:" @ ApplyResult @ ShotAbility.GetMyTemplateName());
-        ApplyResult = ShotContext.FindTargetEffectApplyResult(WeaponTemplate.BonusWeaponEffects[EffectIndex]);
-        WeaponTemplate.BonusWeaponEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, ApplyResult);
-        WeaponTemplate.BonusWeaponEffects[EffectIndex].AddX2ActionsForVisualizationSource(ShotGameState, SourceTrack, ApplyResult);
-      }
-    }
-
-    if( TargetVisualizerInterface != none )
-    {
-      //Allow the visualizer to do any custom processing based on the new game state. For example, units will create a death action when they reach 0 HP.
-      TargetVisualizerInterface.BuildAbilityEffectsVisualization(VisualizeGameState, BuildTrack);
-    }
-
-    if (BuildTrack.TrackActions.Length > 0)
-    {
-      OutVisualizationTracks.AddItem(BuildTrack);
-    }
-
-    //Configure the visualization tracks for the environment
-    //****************************************************************************************
-    foreach ShotGameState.IterateByClassType(class'XComGameState_EnvironmentDamage', EnvironmentDamageEvent)
-    {
-      BuildTrack = EmptyTrack;
-      BuildTrack.TrackActor = none;
-      BuildTrack.StateObject_NewState = EnvironmentDamageEvent;
-      BuildTrack.StateObject_OldState = EnvironmentDamageEvent;
-
-      //Wait until signaled by the shooter that the projectiles are hitting
-      if (!ShotAbilityTemplate.bSkipFireAction)
-        class'X2Action_WaitForAbilityEffect'.static.AddToVisualizationTrack(BuildTrack, ShotContext);
-
-      for (EffectIndex = 0; EffectIndex < ShotAbilityTemplate.AbilityShooterEffects.Length; ++EffectIndex)
-      {
-        ShotAbilityTemplate.AbilityShooterEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');		
-      }
-
-      for (EffectIndex = 0; EffectIndex < ShotAbilityTemplate.AbilityTargetEffects.Length; ++EffectIndex)
-      {
-        ShotAbilityTemplate.AbilityTargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');
-      }
-
-      for (EffectIndex = 0; EffectIndex < MultiTargetEffects.Length; ++EffectIndex)
-      {
-        MultiTargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');	
-      }
-
-      OutVisualizationTracks.AddItem(BuildTrack);
-    }
-
-    foreach ShotGameState.IterateByClassType(class'XComGameState_WorldEffectTileData', WorldDataUpdate)
-    {
-      BuildTrack = EmptyTrack;
-      BuildTrack.TrackActor = none;
-      BuildTrack.StateObject_NewState = WorldDataUpdate;
-      BuildTrack.StateObject_OldState = WorldDataUpdate;
-
-      //Wait until signaled by the shooter that the projectiles are hitting
-      if (!ShotAbilityTemplate.bSkipFireAction)
-        class'X2Action_WaitForAbilityEffect'.static.AddToVisualizationTrack(BuildTrack, ShotContext);
-
-      for (EffectIndex = 0; EffectIndex < ShotAbilityTemplate.AbilityShooterEffects.Length; ++EffectIndex)
-      {
-        ShotAbilityTemplate.AbilityShooterEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');		
-      }
-
-      for (EffectIndex = 0; EffectIndex < ShotAbilityTemplate.AbilityTargetEffects.Length; ++EffectIndex)
-      {
-        ShotAbilityTemplate.AbilityTargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');
-      }
-
-      for (EffectIndex = 0; EffectIndex < MultiTargetEffects.Length; ++EffectIndex)
-      {
-        MultiTargetEffects[EffectIndex].AddX2ActionsForVisualization(ShotGameState, BuildTrack, 'AA_Success');	
-      }
-
-      OutVisualizationTracks.AddItem(BuildTrack);
-    }
-
-    TypicalAbility_AddEffectRedirects(ShotGameState, OutVisualizationTracks, SourceTrack);
-    if(ShooterVisualizerInterface != none)
-    {
-      ShooterVisualizerInterface.BuildAbilityEffectsVisualization(ShotGameState, SourceTrack);				
-    }	
-  }
-
-  /* if ((AnyHits == false) && (AbilityTemplate.LocMissMessage != "" || AbilityTemplate.TargetMissSpeech != '')) */
-  /* { */
-  /*   SoundAndFlyOver = X2Action_PlaySoundAndFlyOver(class'X2Action_PlaySoundAndFlyover'.static.AddToVisualizationTrack(BuildTrack, Context)); */
-  /*   SoundAndFlyOver.SetSoundAndFlyOverParameters(None, AbilityTemplate.LocMissMessage, AbilityTemplate.TargetMissSpeech, eColor_Bad); */
-  /* } */
-  /* else if ((AnyHits == true) && (AbilityTemplate.LocHitMessage != "" || AbilityTemplate.TargetHitSpeech != '') ) */
-  /* { */
-  /*   SoundAndFlyOver = X2Action_PlaySoundAndFlyOver(class'X2Action_PlaySoundAndFlyover'.static.AddToVisualizationTrack(BuildTrack, Context)); */
-  /*   SoundAndFlyOver.SetSoundAndFlyOverParameters(None, AbilityTemplate.LocHitMessage, AbilityTemplate.TargetHitSpeech, eColor_Good); */
-  /* } */
-
-
 	class'X2Action_EnterCover'.static.AddToVisualizationTrack(SourceTrack, Context);
-
-
-
-
 	// Add an action to pop the last CinescriptCamera off the camera stack.
 	CinescriptEndAction = X2Action_EndCinescriptCamera( class'X2Action_EndCinescriptCamera'.static.AddToVisualizationTrack( SourceTrack, Context ) );
 	CinescriptEndAction.CinescriptCamera = CinescriptCamera;

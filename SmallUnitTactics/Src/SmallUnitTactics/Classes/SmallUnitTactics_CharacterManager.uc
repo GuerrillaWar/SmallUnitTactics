@@ -28,3 +28,52 @@ static function UpdateCharacterProfiles ()
     }
   }
 }
+
+
+static function AddSoldierAbilities ()
+{
+  local array<X2DataTemplate> CharTemplates;
+  local X2DataTemplate CharTemplate;
+  local X2CharacterTemplate CharacterTemplate;
+  local X2CharacterTemplateManager Manager;
+  local array<name> CharacterNames;
+  local name CharacterName;
+
+  Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
+  Manager.GetTemplateNames(CharacterNames);
+
+  CharTemplates.Length = 0;
+  Manager.FindDataTemplateAllDifficulties('Soldier', CharTemplates);
+  foreach CharTemplates(CharTemplate)
+  {
+    CharacterTemplate = X2CharacterTemplate(CharTemplate);
+    CharacterTemplate.Abilities.AddItem('SUT_Survey');
+  }
+}
+
+
+static function SetDetectionRadius ()
+{
+  local array<X2DataTemplate> CharTemplates;
+  local X2DataTemplate CharTemplate;
+  local X2CharacterTemplate CharacterTemplate;
+  local X2CharacterTemplateManager Manager;
+  local array<name> CharacterNames;
+  local name CharacterName;
+
+  Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
+  Manager.GetTemplateNames(CharacterNames);
+
+  foreach CharacterNames(CharacterName)
+  {
+    CharTemplates.Length = 0;
+    Manager.FindDataTemplateAllDifficulties(CharacterName, CharTemplates);
+    foreach CharTemplates(CharTemplate)
+    {
+      CharacterTemplate = X2CharacterTemplate(CharTemplate);
+      CharacterTemplate.CharacterBaseStats[eStat_DetectionRadius] = (
+        CharacterTemplate.CharacterBaseStats[eStat_SightRadius]
+      );
+    }
+  }
+}
