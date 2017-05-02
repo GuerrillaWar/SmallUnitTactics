@@ -27,7 +27,9 @@ static function array<X2DataTemplate> CreateTemplates()
 static function AddShotPair(out array<X2DataTemplate> Templates, name TriggerAbilityName, name FollowUpAbilityName, int AbilityCost, eSUTFireMode FireMode)
 {
   local X2AbilityTemplate Template;
-  class'SmallUnitTactics_AbilityManager'.static.RegisterAbilityPair(TriggerAbilityName, FollowUpAbilityName, FireMode);
+  class'SmallUnitTactics_AbilityManager'.static.RegisterAbilityPair(
+    TriggerAbilityName, FollowUpAbilityName, FireMode
+  );
 
   Template = AddShotType(TriggerAbilityName, AbilityCost, FireMode);
   if (FollowUpAbilityName != '')
@@ -42,7 +44,7 @@ static function AddShotPair(out array<X2DataTemplate> Templates, name TriggerAbi
 
   if (FollowUpAbilityName != '')
   {
-	Template = AddFollowShot(FollowUpAbilityName);
+	Template = AddFollowShot(FollowUpAbilityName, FireMode);
 	Templates.AddItem(Template);
   }
 }
@@ -50,7 +52,8 @@ static function AddShotPair(out array<X2DataTemplate> Templates, name TriggerAbi
 static function X2AbilityTemplate AddShotType(
   name AbilityName,
   int AbilityCost,
-  eSUTFireMode FireMode)
+  eSUTFireMode FireMode
+)
 {
   local X2AbilityTemplate                 Template;	
   local SmallUnitTactics_AbilityCost_BurstAmmoCost  AmmoCost;
@@ -248,7 +251,9 @@ static function EventListenerReturn MultiShotListener(Object EventData, Object E
 
 
 static function X2AbilityTemplate AddFollowShot(
-  name AbilityName)
+  name AbilityName,
+  eSUTFireMode FireMode
+)
 {
   local X2AbilityTemplate                 Template;	
   local array<name>                       SkipExclusions;
@@ -291,7 +296,6 @@ static function X2AbilityTemplate AddFollowShot(
   Template.bAllowFreeFireWeaponUpgrade = true;                        // Flag that permits action to become 'free action' via 'Hair Trigger' or similar upgrade / effects
 
   //  Put holo target effect first because if the target dies from this shot, it will be too late to notify the effect.
-  // Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
   //  Various Soldier ability specific effects - effects check for the ability before applying
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.ShredderDamageEffect());
 	Template.AddTargetEffect(default.WeaponUpgradeMissDamage);
@@ -304,12 +308,9 @@ static function X2AbilityTemplate AddFollowShot(
 	Template.AbilityTriggers.AddItem(Trigger);
 
 	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
+  ToHitCalc.FireMode = FireMode;
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
-  // this was wrong -- only used for visualization
-  // Template.bIsASuppressionEffect = true;
-
-  /* Template.AssociatedPassives.AddItem('HoloTargeting'); */
 
   // MAKE IT LIVE!
   Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
@@ -346,7 +347,9 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
 	local XComGameStateContext_Ability AbilityContext;
 	local int TrackIndex, ActionIndex;
 	local X2Action_ExitCover ExitCoverAction;
+  local X2Action_Fire FireAction;
 	local X2Action_EnterCover EnterCoverAction;
+  local X2Action_WaitForAbilityEffect WaitAction;
 	local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
 
 	// Build the first shot of Rapid Fire's visualization
@@ -355,6 +358,7 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
 	Context = VisualizeGameState.GetContext();
 	AbilityContext = XComGameStateContext_Ability(Context);
 
+  // SOURCE TRACK EDITS
 	for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
 	{
 		if( OutVisualizationTracks[TrackIndex].StateObject_NewState.ObjectID == AbilityContext.InputContext.SourceObject.ObjectID)
@@ -367,9 +371,11 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
 	for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
 	{
 		ExitCoverAction = X2Action_ExitCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+		FireAction = X2Action_Fire(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
 		EnterCoverAction = X2Action_EnterCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
 		if (
       (ExitCoverAction != none) ||
+      (FireAction != none) ||
       (EnterCoverAction != none)
     )
 		{
@@ -383,6 +389,23 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
     )
   );
   OutVisualizationTracks[TrackIndex].TrackActions.AddItem(ManualRunAction);
+
+
+
+  // TARGET TRACK EDITS
+	for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
+	{
+    for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
+    {
+      WaitAction = X2Action_WaitForAbilityEffect(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+      if (
+        (WaitAction != none)
+      )
+      {
+        OutVisualizationTracks[TrackIndex].TrackActions.Remove(ActionIndex, 1);
+      }
+    }
+	}
 }
 
 

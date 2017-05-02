@@ -138,7 +138,7 @@ static function bool GetEventChainInfo(const XComGameStateContext_Ability Abilit
     }
   }
 
-  if (bEndFound)
+  if (!bEndFound)
   {
     out_iNumShots = -1;
   }
