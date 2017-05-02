@@ -17,3 +17,8 @@ LocHelpText="Lay prolonged fire at the target."
 [SUT_Survey X2AbilityTemplate]
 LocFriendlyName="Survey"
 LocHelpText="Spend the turn observing the battlefield, boosting your sight radius."
+
+[SUT_ThrowGrenade X2AbilityTemplate]
+LocFriendlyName="Throw Grenade"
+LocHelpText="Prime and throw grenade immediately. Will explode the following turn."
+

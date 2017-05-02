@@ -28,6 +28,7 @@ struct SmallUnitTacticsWeaponProfile
 };
 
 var config array<SmallUnitTacticsWeaponProfile>   arrWeaponProfiles;
+var config array<name>                            arrTimedGrenades;
 
 static function SmallUnitTacticsWeaponProfile GetWeaponProfile(
   name WeaponName
@@ -188,6 +189,33 @@ static function LoadWeaponProfiles ()
         WeaponTemplate.Abilities.AddItem('SUT_AutoShot');
         WeaponTemplate.Abilities.AddItem('SUT_AutoFollowShot');
       }
+    }
+  }
+}
+
+
+static function LoadGrenadeProfiles ()
+{
+  local array<X2DataTemplate> ItemTemplates;
+  local X2DataTemplate ItemTemplate;
+  local X2GrenadeTemplate GrenadeTemplate;
+  local X2ItemTemplateManager Manager;
+  local name GrenadeName;
+
+  Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+
+  foreach default.arrTimedGrenades(GrenadeName)
+  {
+    ItemTemplates.Length = 0;
+    Manager.FindDataTemplateAllDifficulties(GrenadeName, ItemTemplates);
+    foreach ItemTemplates(ItemTemplate)
+    {
+      GrenadeTemplate = X2GrenadeTemplate(ItemTemplate);
+      GrenadeTemplate.Abilities.RemoveItem('ThrowGrenade');
+      GrenadeTemplate.Abilities.AddItem('SUT_ThrowGrenade');
+      GrenadeTemplate.Abilities.AddItem(
+        class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName
+      );
     }
   }
 }
