@@ -104,6 +104,7 @@ static function X2AbilityTemplate ThrowGrenade()
 	Template.bUseAmmoAsChargesForHUD = true;
 	Template.bDisplayInUITooltip = false;
 	Template.bDisplayInUITacticalText = false;
+  Template.ActionFireClass = class'SmallUnitTactics_X2Action_FireNoExplode';
 
 	Template.bShowActivation = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
@@ -114,6 +115,7 @@ static function X2AbilityTemplate ThrowGrenade()
 
 	// This action is considered 'hostile' and can be interrupted!
 	Template.Hostility = eHostility_Offensive;
+  Template.ConcealmentRule = eConceal_Always;
 	Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
 
 	return Template;	
@@ -205,6 +207,7 @@ static function X2DataTemplate LaunchGrenade()
 
 	// Scott W says a Launcher VO cue doesn't exist, so I should use this one.  mdomowicz 2015_08_24
 	Template.ActivationSpeech = 'ThrowGrenade';
+  Template.ActionFireClass = class'SmallUnitTactics_X2Action_FireNoExplode';
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
@@ -272,6 +275,7 @@ static function X2AbilityTemplate DetonateGrenade()
 	Template.bDisplayInUITacticalText = false;
 
 	Template.FrameAbilityCameraType = eCameraFraming_Never;
+  Template.ConcealmentRule = eConceal_Never;
 
 	Template.ActivationSpeech = 'Explosion';
 	Template.bSkipFireAction = true;

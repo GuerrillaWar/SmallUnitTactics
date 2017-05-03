@@ -213,6 +213,13 @@ static function LoadGrenadeProfiles ()
       GrenadeTemplate = X2GrenadeTemplate(ItemTemplate);
       GrenadeTemplate.Abilities.RemoveItem('ThrowGrenade');
       GrenadeTemplate.Abilities.AddItem('SUT_ThrowGrenade');
+      if (GrenadeTemplate.AbilityIconOverrides.Length > 0)
+      {
+        GrenadeTemplate.AddAbilityIconOverride(
+          'SUT_ThrowGrenade',
+          GrenadeTemplate.AbilityIconOverrides[0].OverrideIcon
+        );
+      }
       GrenadeTemplate.Abilities.AddItem(
         class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName
       );
