@@ -12,18 +12,48 @@ class SmallUnitTactics_Effect_TickingGrenade extends X2Effect_Persistent config(
 
 var config string PersistentParticles;
 
-function RegisterForEvents(XComGameState_Effect EffectGameState)
+simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
+	local SmallUnitTactics_GameState_Effect_TickingGrenade GrenadeEffectState;
 	local X2EventManager EventMgr;
-	local Object EffectObj;
+	local Object ListenerObj;
+  local XComGameStateHistory History;
+	local XComGameState_Player PlayerState;
 
+  History = `XCOMHISTORY;
 	EventMgr = `XEVENTMGR;
+	PlayerState = XComGameState_Player(History.GetGameStateForObjectID(NewEffectState.ApplyEffectParameters.PlayerStateObjectRef.ObjectID));
 
-	EffectObj = EffectGameState;
+	if (GetEffectComponent(NewEffectState) == none)
+	{
+		//create component and attach it to GameState_Effect, adding the new state object to the NewGameState container
+		GrenadeEffectState = SmallUnitTactics_GameState_Effect_TickingGrenade(
+      NewGameState.CreateStateObject(class'SmallUnitTactics_GameState_Effect_TickingGrenade')
+    );
+		NewEffectState.AddComponentObject(GrenadeEffectState);
+		NewGameState.AddStateObject(GrenadeEffectState);
+	}
 
-	EventMgr.RegisterForEvent(EffectObj, 'ObjectMoved', EffectGameState.ProximityMine_ObjectMoved, ELD_OnStateSubmitted);
-	EventMgr.RegisterForEvent(EffectObj, 'AbilityActivated', EffectGameState.ProximityMine_AbilityActivated, ELD_OnStateSubmitted);
+	//add listener to new component effect -- do it here because the RegisterForEvents call happens before OnEffectAdded, so component doesn't yet exist
+	ListenerObj = GrenadeEffectState;
+	if (ListenerObj == none)
+	{
+		`Redscreen("TickingGrenade: Failed to find GrenadeComponent Component when registering listener");
+		return;
+	}
+
+  EventMgr.RegisterForEvent(ListenerObj, 'PlayerTurnBegun', GrenadeEffectState.OnTurnBegun, ELD_OnStateSubmitted, , PlayerState);
 }
+
+static function SmallUnitTactics_GameState_Effect_TickingGrenade GetEffectComponent(XComGameState_Effect Effect)
+{
+	if (Effect != none) 
+		return SmallUnitTactics_GameState_Effect_TickingGrenade(
+      Effect.FindComponentObject(class'SmallUnitTactics_GameState_Effect_TickingGrenade')
+    );
+	return none;
+}
+
 
 simulated function AddX2ActionsForVisualization(XComGameState VisualizeGameState, out VisualizationTrack BuildTrack, name EffectApplyResult)
 {

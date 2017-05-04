@@ -243,10 +243,10 @@ static function X2AbilityTemplate DetonateGrenade()
 	Template.AbilityTargetStyle = CursorTarget;
 
 	Template.AddShooterEffect(new class'X2Effect_BreakUnitConcealment');
+	Template.bUseThrownGrenadeEffects = true;
 
 	RadiusMultiTarget = new class'X2AbilityMultiTarget_Radius';
 	RadiusMultiTarget.bUseWeaponRadius = true;
-	RadiusMultiTarget.fTargetRadius = 2;
 	Template.AbilityMultiTargetStyle = RadiusMultiTarget;
 
 	UnitPropertyCondition = new class'X2Condition_UnitProperty';
@@ -326,20 +326,20 @@ function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, ou
 	OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(LookAtAction);
 	
 	//Do the detonation
-	EffectAction = X2Action_PlayEffect(class'X2Action_PlayEffect'.static.CreateVisualizationAction(AbilityContext));
-	EffectAction.EffectName = default.DetonateGrenadeExplosion;
-	EffectAction.EffectLocation = AbilityContext.InputContext.TargetLocations[0];
-	EffectAction.EffectRotation = Rotator(vect(0, 0, 1));
-	EffectAction.bWaitForCompletion = false;
-	EffectAction.bWaitForCameraCompletion = false;
-	OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(EffectAction);
+	/* EffectAction = X2Action_PlayEffect(class'X2Action_PlayEffect'.static.CreateVisualizationAction(AbilityContext)); */
+	/* EffectAction.EffectName = default.DetonateGrenadeExplosion; */
+	/* EffectAction.EffectLocation = AbilityContext.InputContext.TargetLocations[0]; */
+	/* EffectAction.EffectRotation = Rotator(vect(0, 0, 1)); */
+	/* EffectAction.bWaitForCompletion = false; */
+	/* EffectAction.bWaitForCameraCompletion = false; */
+	/* OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(EffectAction); */
 
-	SoundAction = X2Action_StartStopSound(class'X2Action_StartStopSound'.static.CreateVisualizationAction(AbilityContext));
-	SoundAction.Sound = new class'SoundCue';
-	SoundAction.Sound.AkEventOverride = AkEvent'SoundX2CharacterFX.Proximity_Mine_Explosion';
-	SoundAction.bIsPositional = true;
-	SoundAction.vWorldPosition = AbilityContext.InputContext.TargetLocations[0];
-	OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(SoundAction);
+	/* SoundAction = X2Action_StartStopSound(class'X2Action_StartStopSound'.static.CreateVisualizationAction(AbilityContext)); */
+	/* SoundAction.Sound = new class'SoundCue'; */
+	/* SoundAction.Sound.AkEventOverride = AkEvent'SoundX2CharacterFX.Proximity_Mine_Explosion'; */
+	/* SoundAction.bIsPositional = true; */
+	/* SoundAction.vWorldPosition = AbilityContext.InputContext.TargetLocations[0]; */
+	/* OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(SoundAction); */
 
 	//Make everyone else wait for the detonation
 	for (LoopIdx = 0; LoopIdx < OutVisualizationTracks.Length; ++LoopIdx)
