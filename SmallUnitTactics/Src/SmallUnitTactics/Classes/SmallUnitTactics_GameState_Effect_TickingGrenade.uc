@@ -9,13 +9,17 @@ function EventListenerReturn OnTurnBegun(Object EventData, Object EventSource, X
 {
 	local XComGameState_Effect Effect;
   local XComGameState_Unit SourceUnit;
+  local Object EffectObj;
 	Effect = GetOwningEffect();
+  EffectObj = self;
+
 	SourceUnit = XComGameState_Unit(
     `XCOMHISTORY.GetGameStateForObjectID(
       Effect.ApplyEffectParameters.SourceStateObjectRef.ObjectID
     )
   );
 
+  `XEVENTMGR.UnRegisterFromEvent(EffectObj, EventID);
   DetonateGrenade(Effect, SourceUnit, GameState);
   return ELR_NoInterrupt;
 }
@@ -49,7 +53,17 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 				EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
 				NewGameState = History.CreateNewGameState(true, EffectRemovedState);
 				Effect.RemoveEffect(NewGameState, RespondingToGameState);
-        `TACTICALRULES.SubmitGameState(NewGameState);
+
+        if (NewGameState.GetNumGameStateObjects() > 0)
+        {
+          `TACTICALRULES.SubmitGameState(NewGameState);
+
+          //  effects may have changed action availability - if a unit died, took damage, etc.
+        }
+        else
+        {
+          `XCOMHISTORY.CleanupPendingGameState(NewGameState);
+        }
 			}
 		}
 	}

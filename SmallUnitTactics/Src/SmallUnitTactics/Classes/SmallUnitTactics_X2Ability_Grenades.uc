@@ -289,19 +289,30 @@ static function X2AbilityTemplate DetonateGrenade()
 function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
 {
 	local XComGameStateContext_Ability AbilityContext;
+  local XComGameState_Ability Ability;
 	local int ShooterID, ShooterTrackIdx, LoopIdx;
 	local VisualizationTrack VisTrack;
 	local X2Action_PlayEffect EffectAction;
 	local X2Action_SendInterTrackMessage MessageAction;
+  local X2GrenadeTemplate GrenadeTemplate;
 	local X2Action_WaitForAbilityEffect WaitAction;
 	local X2Action_CameraLookAt LookAtAction;
+  local SmallUnitTactics_X2Action_SpawnImpactActor ImpactAction;
 	local X2Action_Delay DelayAction;
+  local XComWeapon GrenadeArchetype;
 	local X2Action_StartStopSound SoundAction;
+	local XComGameState_Item       SourceWeapon;
 
 	ShooterTrackIdx = INDEX_NONE;
 	AbilityContext = XComGameStateContext_Ability(VisualizeGameState.GetContext());
 	ShooterID = AbilityContext.InputContext.SourceObject.ObjectID;
 	TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
+  Ability = XComGameState_Ability(
+    `XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.AbilityRef.ObjectID)
+  );
+	SourceWeapon = Ability.GetSourceWeapon();
+  GrenadeTemplate = X2GrenadeTemplate(SourceWeapon.GetMyTemplate());
+  GrenadeArchetype = XComWeapon(`CONTENT.RequestGameArchetype(GrenadeTemplate.GameArchetype));
 
 	//Find and grab the "shooter" track - the unit who threw the proximity mine initially
 	for (LoopIdx = 0; LoopIdx < OutVisualizationTracks.Length; ++LoopIdx)
@@ -324,22 +335,37 @@ function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, ou
 	LookAtAction.BlockUntilFinished = true;
 	LookAtAction.LookAtDuration = 2.0f;
 	OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(LookAtAction);
-	
 	//Do the detonation
-	/* EffectAction = X2Action_PlayEffect(class'X2Action_PlayEffect'.static.CreateVisualizationAction(AbilityContext)); */
-	/* EffectAction.EffectName = default.DetonateGrenadeExplosion; */
-	/* EffectAction.EffectLocation = AbilityContext.InputContext.TargetLocations[0]; */
-	/* EffectAction.EffectRotation = Rotator(vect(0, 0, 1)); */
-	/* EffectAction.bWaitForCompletion = false; */
-	/* EffectAction.bWaitForCameraCompletion = false; */
-	/* OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(EffectAction); */
+  
+	if (GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].PlayEffectOnDeath != none)
+  {
+    EffectAction = X2Action_PlayEffect(class'X2Action_PlayEffect'.static.CreateVisualizationAction(AbilityContext));
+    EffectAction.EffectName = PathName(GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].PlayEffectOnDeath);
+    EffectAction.bWaitForCompletion = false;
+    EffectAction.bWaitForCameraCompletion = false;
+    OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(EffectAction);
+  }
 
-	/* SoundAction = X2Action_StartStopSound(class'X2Action_StartStopSound'.static.CreateVisualizationAction(AbilityContext)); */
-	/* SoundAction.Sound = new class'SoundCue'; */
-	/* SoundAction.Sound.AkEventOverride = AkEvent'SoundX2CharacterFX.Proximity_Mine_Explosion'; */
-	/* SoundAction.bIsPositional = true; */
-	/* SoundAction.vWorldPosition = AbilityContext.InputContext.TargetLocations[0]; */
-	/* OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(SoundAction); */
+	if (GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].UseImpactActor != none)
+  {
+    ImpactAction = SmallUnitTactics_X2Action_SpawnImpactActor(
+      class'SmallUnitTactics_X2Action_SpawnImpactActor'.static.CreateVisualizationAction(AbilityContext)
+    );
+    ImpactAction.Impact = GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].UseImpactActor;
+    ImpactAction.TargetLocation = AbilityContext.InputContext.TargetLocations[0];
+    ImpactAction.TargetRotation = vect(0, 0, 1);
+    OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(ImpactAction);
+  }
+
+	if (GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].DeathSound != none)
+  {
+    SoundAction = X2Action_StartStopSound(class'X2Action_StartStopSound'.static.CreateVisualizationAction(AbilityContext));
+    SoundAction.Sound = new class'SoundCue';
+    SoundAction.Sound.AkEventOverride = GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].DeathSound;
+    SoundAction.bIsPositional = true;
+    SoundAction.vWorldPosition = AbilityContext.InputContext.TargetLocations[0];
+    OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(SoundAction);
+  }
 
 	//Make everyone else wait for the detonation
 	for (LoopIdx = 0; LoopIdx < OutVisualizationTracks.Length; ++LoopIdx)
@@ -360,6 +386,7 @@ function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, ou
 	DelayAction.Duration = 0.5;
 	OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(DelayAction);
 
+  `log("End of Grenade Visualization Delegate");
 }
 
 //  Special handling for proximity mine damage as they do not deal damage until they explode and therefore don't have damage effects for throw/launch
