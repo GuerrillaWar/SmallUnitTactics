@@ -17,6 +17,7 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	local SmallUnitTactics_GameState_Effect_TickingGrenade GrenadeEffectState;
 	local X2EventManager EventMgr;
 	local Object ListenerObj;
+  local XComGameState_Ability Ability;
   local XComGameStateHistory History;
 	local XComGameState_Player PlayerState;
 
@@ -31,6 +32,10 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
       NewGameState.CreateStateObject(class'SmallUnitTactics_GameState_Effect_TickingGrenade')
     );
     GrenadeEffectState.Launched = Launched;
+    Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(
+      ApplyEffectParameters.AbilityStateObjectRef.ObjectID
+    ));
+    GrenadeEffectState.SourceGrenade = Ability.SourceWeapon;
 		NewEffectState.AddComponentObject(GrenadeEffectState);
 		NewGameState.AddStateObject(GrenadeEffectState);
 	}
