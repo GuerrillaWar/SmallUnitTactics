@@ -1,8 +1,7 @@
 class SmallUnitTactics_X2Ability_Grenades extends X2Ability config(SmallUnitTactics);
 
 var name DetonateGrenadeAbilityName;
-
-var config string DetonateGrenadeExplosion;       //  Particle effect for explosion
+var name DetonateLaunchedGrenadeAbilityName;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -349,6 +348,8 @@ function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, ou
   {
     EffectAction = X2Action_PlayEffect(class'X2Action_PlayEffect'.static.CreateVisualizationAction(AbilityContext));
     EffectAction.EffectName = PathName(GrenadeArchetype.DefaultProjectileTemplate.ProjectileElements[0].PlayEffectOnDeath);
+    EffectAction.EffectLocation = AbilityContext.InputContext.TargetLocations[0];
+    EffectAction.EffectRotation = Rotator(vect(0, 0, 1));
     EffectAction.bWaitForCompletion = false;
     EffectAction.bWaitForCameraCompletion = false;
     OutVisualizationTracks[ShooterTrackIdx].TrackActions.AddItem(EffectAction);

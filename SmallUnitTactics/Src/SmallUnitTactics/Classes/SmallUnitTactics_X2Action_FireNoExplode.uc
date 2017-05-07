@@ -6,5 +6,6 @@ function AddProjectileVolley(X2UnifiedProjectile NewProjectile)
     ParticleSystem'FX_WP_ProximityMine.P_ProximityMine_Interim'
   );
   NewProjectile.ProjectileElements[0].UseImpactActor = none;
+  NewProjectile.ProjectileElements[0].DeathSound = none;
 	super.AddProjectileVolley(NewProjectile);
 }
