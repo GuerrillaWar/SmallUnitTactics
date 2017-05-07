@@ -37,6 +37,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Config\XComSmallUnitTactics.ini">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Content\FX_GW_DelayedExplosions.upk">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Localization\SmallUnitTactics.int">
       <SubType>Content</SubType>
     </Content>
@@ -93,6 +96,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_ShowTickingGrenade.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_SpawnImpactActor.uc">
