@@ -10,7 +10,8 @@ static function array<X2DataTemplate> CreateTemplates()
 
 	Templates.AddItem(ThrowGrenade());
 	Templates.AddItem(LaunchGrenade());
-	Templates.AddItem(DetonateGrenade());
+	Templates.AddItem(DetonateGrenade(true));
+	Templates.AddItem(DetonateGrenade(false));
 
 	return Templates;
 }
@@ -91,6 +92,7 @@ static function X2AbilityTemplate ThrowGrenade()
 
 	TickingGrenadeEffect = new class'SmallUnitTactics_Effect_TickingGrenade';
 	TickingGrenadeEffect.BuildPersistentEffect(1, true, false, false);
+  TickingGrenadeEffect.Launched = false;
 	Template.AddShooterEffect(TickingGrenadeEffect);
 
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
@@ -192,6 +194,7 @@ static function X2DataTemplate LaunchGrenade()
 
 	TickingGrenadeEffect = new class'SmallUnitTactics_Effect_TickingGrenade';
 	TickingGrenadeEffect.BuildPersistentEffect(1, true, false, false);
+  TickingGrenadeEffect.Launched = true;
 	Template.AddShooterEffect(TickingGrenadeEffect);
 
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
@@ -222,7 +225,7 @@ static function X2DataTemplate LaunchGrenade()
 	return Template;
 }
 
-static function X2AbilityTemplate DetonateGrenade()
+static function X2AbilityTemplate DetonateGrenade(bool Launched)
 {
 	local X2AbilityTemplate							Template;
 	local X2AbilityToHitCalc_StandardAim			ToHit;
@@ -232,7 +235,11 @@ static function X2AbilityTemplate DetonateGrenade()
 	local X2AbilityMultiTarget_Radius	            RadiusMultiTarget;
 	local X2Effect_ApplyWeaponDamage				WeaponDamage;
 
-	`CREATE_X2ABILITY_TEMPLATE(Template, default.DetonateGrenadeAbilityName);
+	`CREATE_X2ABILITY_TEMPLATE(Template,
+    Launched
+      ? default.DetonateLaunchedGrenadeAbilityName
+      : default.DetonateGrenadeAbilityName
+  );
 
 	ToHit = new class'X2AbilityToHitCalc_StandardAim';
 	ToHit.bIndirectFire = true;
@@ -243,7 +250,8 @@ static function X2AbilityTemplate DetonateGrenade()
 	Template.AbilityTargetStyle = CursorTarget;
 
 	Template.AddShooterEffect(new class'X2Effect_BreakUnitConcealment');
-	Template.bUseThrownGrenadeEffects = true;
+	Template.bUseThrownGrenadeEffects = !Launched;
+	Template.bUseLaunchedGrenadeEffects = Launched;
 
 	RadiusMultiTarget = new class'X2AbilityMultiTarget_Radius';
 	RadiusMultiTarget.bUseWeaponRadius = true;
@@ -427,4 +435,5 @@ function bool GrenadeDamagePreview(XComGameState_Ability AbilityState, StateObje
 DefaultProperties
 {
 	DetonateGrenadeAbilityName = "SUT_DetonateGrenade"
+	DetonateLaunchedGrenadeAbilityName = "SUT_DetonateLaunchedGrenade"
 }

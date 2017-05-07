@@ -1,4 +1,5 @@
 class SmallUnitTactics_GameState_Effect_TickingGrenade extends XComGameState_BaseObject;
+var bool Launched;
 
 function XComGameState_Effect GetOwningEffect()
 {
@@ -37,7 +38,11 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 	local XComGameState_Unit    UnitState;
 
 	History = `XCOMHISTORY;
-	Action.AbilityObjectRef = SourceUnit.FindAbility(class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName);
+	Action.AbilityObjectRef = SourceUnit.FindAbility(
+    Launched
+      ? class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
+      : class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName
+  );
 	if (Action.AbilityObjectRef.ObjectID != 0)
 	{
 		AbilityState = XComGameState_Ability(History.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID));

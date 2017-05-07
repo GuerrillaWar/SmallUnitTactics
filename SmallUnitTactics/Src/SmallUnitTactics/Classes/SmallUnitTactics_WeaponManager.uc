@@ -223,6 +223,9 @@ static function LoadGrenadeProfiles ()
       GrenadeTemplate.Abilities.AddItem(
         class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName
       );
+      GrenadeTemplate.Abilities.AddItem(
+        class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
+      );
     }
   }
 }

@@ -11,6 +11,7 @@
 class SmallUnitTactics_Effect_TickingGrenade extends X2Effect_Persistent config(SmallUnitTactics);
 
 var config string PersistentParticles;
+var bool Launched;
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
@@ -30,6 +31,7 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 		GrenadeEffectState = SmallUnitTactics_GameState_Effect_TickingGrenade(
       NewGameState.CreateStateObject(class'SmallUnitTactics_GameState_Effect_TickingGrenade')
     );
+    GrenadeEffectState.Launched = Launched;
 		NewEffectState.AddComponentObject(GrenadeEffectState);
 		NewGameState.AddStateObject(GrenadeEffectState);
 	}
