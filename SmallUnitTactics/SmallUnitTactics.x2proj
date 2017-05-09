@@ -62,7 +62,13 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_AmbientSuppression.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_PrimedGrenade.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_TickingGrenade.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_Effect_PrimedGrenade.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_Effect_TickingGrenade.uc">
