@@ -71,6 +71,8 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
   local vector                DetonationLocation;
   local array<vector>         TargetLocations;
 	local XComGameState_Unit    UnitState;
+  local vector ExplodeLocation;
+  local array<vector> ExplodeLocations;
 
 	History = `XCOMHISTORY;
 	Action.AbilityObjectRef = SourceUnit.FindAbility(
@@ -85,12 +87,23 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 		if (AbilityState != none)
 		{
 			Action.AvailableCode = 'AA_Success';
-			AbilityState.GatherAdditionalAbilityTargetsForLocation(DetonationLocation, Target);
+			AbilityState.GatherAdditionalAbilityTargetsForLocation(Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations[0], Target);
 			Action.AvailableTargets.AddItem(Target);
-      TargetLocations.AddItem(DetonationLocation);
+      /* TargetLocations.AddItem(DetonationLocation); */
 
-			if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations))
+      ExplodeLocations = Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations;
+      `log("Detonation locations:");
+      foreach ExplodeLocations(ExplodeLocation)
+      {
+        `log("-" @ ExplodeLocation);
+      }
+      `log("END Detonation locations");
+
+      `log("Triggering ability" @ class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName);
+			/* if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations)) */
+			if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations))
 			{
+        `log("Triggered ability" @ class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName);
 				EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
 				NewGameState = History.CreateNewGameState(true, EffectRemovedState);
 				Effect.RemoveEffect(NewGameState, RespondingToGameState);

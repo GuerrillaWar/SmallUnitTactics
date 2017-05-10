@@ -130,6 +130,7 @@ static function X2AbilityTemplate PrimeGrenade()
 	local X2AbilityCost_Ammo                AmmoCost;
 	local X2AbilityCost_ActionPoints        ActionPointCost;
 	local X2AbilityToHitCalc_StandardAim    StandardAim;
+	local X2AbilityMultiTarget_Radius       RadiusMultiTarget;
 	local X2Condition_UnitProperty          UnitPropertyCondition;
 	local X2Condition_UnitInventory         UnitInventoryCondition;
 	local X2Condition_AbilitySourceWeapon   GrenadeCondition, ProximityMineCondition;
@@ -160,6 +161,14 @@ static function X2AbilityTemplate PrimeGrenade()
 	
 	Template.AbilityTargetStyle = default.SelfTarget;	
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+
+	RadiusMultiTarget = new class'X2AbilityMultiTarget_Radius';
+	RadiusMultiTarget.bUseWeaponRadius = true;
+	Template.AbilityMultiTargetStyle = RadiusMultiTarget;
+
+	UnitPropertyCondition = new class'X2Condition_UnitProperty';
+	UnitPropertyCondition.ExcludeDead = true;
+	Template.AbilityShooterConditions.AddItem(UnitPropertyCondition);
 
 	UnitPropertyCondition = new class'X2Condition_UnitProperty';
 	UnitPropertyCondition.ExcludeDead = true;
@@ -192,6 +201,7 @@ static function X2AbilityTemplate PrimeGrenade()
 
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
 	
+	Template.TargetingMethod = class'SmallUnitTactics_X2TargetingMethod_Prime';
 	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_ShowIfAvailable;
 	Template.HideErrors.AddItem('AA_WeaponIncompatible');
@@ -203,6 +213,7 @@ static function X2AbilityTemplate PrimeGrenade()
 	Template.bDisplayInUITacticalText = false;
 
 	Template.bShowActivation = true;
+	Template.bShowPostActivation = true;
 	Template.bSkipFireAction = true;
   Template.LocFlyOverText = "Priming Grenade";
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;

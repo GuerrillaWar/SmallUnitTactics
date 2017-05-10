@@ -39,6 +39,8 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 	local XComGameStateHistory History;
 	local TTile                 AffectedTile;
 	local XComGameState_Unit    UnitState;
+  local vector ExplodeLocation;
+  local array<vector> ExplodeLocations;
 
 	History = `XCOMHISTORY;
 	Action.AbilityObjectRef = SourceUnit.FindAbility(
@@ -54,6 +56,14 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 		{
 			Action.AvailableCode = 'AA_Success';
 			AbilityState.GatherAdditionalAbilityTargetsForLocation(Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations[0], Target);
+      
+      ExplodeLocations = Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations;
+      `log("Detonation locations:");
+      foreach ExplodeLocations(ExplodeLocation)
+      {
+        `log("-" @ ExplodeLocation);
+      }
+      `log("END Detonation locations");
 
 			Action.AvailableTargets.AddItem(Target);
 
