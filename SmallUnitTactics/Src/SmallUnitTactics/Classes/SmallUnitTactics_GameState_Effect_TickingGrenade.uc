@@ -56,15 +56,7 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
 		{
 			Action.AvailableCode = 'AA_Success';
 			AbilityState.GatherAdditionalAbilityTargetsForLocation(Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations[0], Target);
-      
       ExplodeLocations = Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations;
-      `log("Detonation locations:");
-      foreach ExplodeLocations(ExplodeLocation)
-      {
-        `log("-" @ ExplodeLocation);
-      }
-      `log("END Detonation locations");
-
 			Action.AvailableTargets.AddItem(Target);
 
 			if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations))

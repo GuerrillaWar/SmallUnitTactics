@@ -519,6 +519,9 @@ function DetonateGrenade_BuildVisualization(XComGameState VisualizeGameState, ou
   GrenadeTemplate = X2GrenadeTemplate(SourceWeapon.GetMyTemplate());
   GrenadeArchetype = XComWeapon(`CONTENT.RequestGameArchetype(GrenadeTemplate.GameArchetype));
 
+  `log("Visualising Ability:" @ Ability.GetMyTemplateName());
+  `log("Visualising Grenade:" @ SourceWeapon.GetMyTemplateName());
+
 	//Find and grab the "shooter" track - the unit who threw the proximity mine initially
 	for (LoopIdx = 0; LoopIdx < OutVisualizationTracks.Length; ++LoopIdx)
 	{
