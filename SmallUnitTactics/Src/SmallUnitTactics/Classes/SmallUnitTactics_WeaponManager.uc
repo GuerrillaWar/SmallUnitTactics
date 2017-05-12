@@ -258,7 +258,11 @@ static function LockdownAbilitiesWhenPrimedGrenadeHeld ()
 
   foreach AbilityNames(AbilityName)
   {
-    if (AbilityName == 'SUT_ThrowPrimedGrenade')
+    if (
+      AbilityName == 'SUT_ThrowPrimedGrenade' ||
+      AbilityName == 'SUT_DetonateGrenade' ||
+      AbilityName == 'SUT_DetonateLaunchedGrenade'
+    )
     {
       continue;
     }

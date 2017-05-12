@@ -62,8 +62,9 @@ function EventListenerReturn OnTurnEnded(Object EventData, Object EventSource, X
 function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceUnit, XComGameState RespondingToGameState)
 {
 	local XComGameState_Ability AbilityState;
-	local AvailableAction Action;
+	local AvailableAction Action, IterAction;
 	local AvailableTarget Target;
+  local GameRulesCache_Unit UnitCache;
   local XComGameState_Item SourceWeapon;
   local X2AbilityTemplate AbilityTemplate;
   local X2GrenadeTemplate GrenadeTemplate;
@@ -76,13 +77,22 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
   local array<vector>         TargetLocations;
 	local XComGameState_Unit    UnitState;
   local vector ExplodeLocation;
+  local int AbilityID;
   local array<vector> ExplodeLocations;
 
 	History = `XCOMHISTORY;
-	Action.AbilityObjectRef = SourceUnit.FindAbility(
+  `TACTICALRULES.GetGameRulesCache_Unit(SourceUnit.GetReference(), UnitCache);
+	AbilityID = SourceUnit.FindAbility(
     class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName,
     SourceGrenade
-  );
+  ).ObjectID;
+  foreach UnitCache.AvailableActions(IterAction)
+  {
+    if (IterAction.AbilityObjectRef.ObjectID == AbilityID)
+    {
+      Action = IterAction;
+    }
+  }
 	SourceWeapon = XComGameState_Item(
     `XCOMHISTORY.GetGameStateForObjectID(SourceGrenade.ObjectID)
   );
@@ -93,7 +103,7 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
     DetonationLocation = `XWORLD.GetPositionFromTileCoordinates(SourceUnit.TileLocation);
 		if (AbilityState != none)
 		{
-			Action.AvailableCode = 'AA_Success';
+			/* Action.AvailableCode = 'AA_Success'; */
 			AbilityState.GatherAdditionalAbilityTargetsForLocation(DetonationLocation, Target);
 			Action.AvailableTargets.AddItem(Target);
       TargetLocations.AddItem(DetonationLocation);
@@ -101,27 +111,8 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
       AbilityTemplate = AbilityState.GetMyTemplate();
       GrenadeTemplate = X2GrenadeTemplate(SourceWeapon.GetMyTemplate());
 
-      `log("Detonating" @ SourceWeapon.GetMyTemplateName());
-      `log("UseThrowEffects:" @ AbilityTemplate.bUseThrownGrenadeEffects);
-      `log("UseLaunchEffects:" @ AbilityTemplate.bUseLaunchedGrenadeEffects);
-      `log("Detonation locations:");
-      foreach TargetLocations(ExplodeLocation)
-      {
-        `log("-" @ ExplodeLocation);
-      }
-      `log("END Detonation locations");
-      `log("Targets:");
-      foreach Target.AdditionalTargets(TargetRef)
-      {
-        `log("-" @ TargetRef.ObjectID);
-      }
-      `log("END Targets");
-
-      `log("Triggering ability" @ class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName);
-			/* if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations)) */
 			if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations))
 			{
-        `log("Triggered ability" @ class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName);
 				EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
 				NewGameState = History.CreateNewGameState(true, EffectRemovedState);
 				Effect.RemoveEffect(NewGameState, RespondingToGameState);
