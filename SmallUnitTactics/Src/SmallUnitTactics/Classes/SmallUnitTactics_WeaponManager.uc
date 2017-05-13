@@ -8,12 +8,29 @@ enum eSUTFireMode
   eSUTFireMode_Automatic,
 };
 
+struct SmallUnitTacticsGrazeProfile
+{
+  var int High;
+  var int Low;
+  var int Open; // used for units that don't take cover
+  var int Flanked;
+
+  structdefaultproperties
+  {
+    High = -1;
+    Low = -1;
+    Open = -1;
+    Flanked = -1;
+  }
+};
+
 struct SmallUnitTacticsShotProfile
 {
   var int ShotCount;
   var int SuppressionPenalty;
   var int AimModifier;
   var int CritModifier;
+  var SmallUnitTacticsGrazeProfile GrazeModifier;
 };
 
 struct SmallUnitTacticsWeaponProfile
@@ -21,6 +38,7 @@ struct SmallUnitTacticsWeaponProfile
   var name WeaponName;
   var int iClipSize;
   var WeaponDamageValue BulletProfile;
+  var SmallUnitTacticsGrazeProfile DefaultGrazeModifier;
   var SmallUnitTacticsShotProfile Aimed;
   var SmallUnitTacticsShotProfile Snap;
   var SmallUnitTacticsShotProfile Burst;
@@ -51,20 +69,18 @@ static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
 
   WeaponProfile = GetWeaponProfile(WeaponName);
 
-  if (FireMode == eSUTFireMode_Snap)
+  switch (FireMode)
   {
+    case eSUTFireMode_Snap:
     return WeaponProfile.Snap.ShotCount;
-  }
-  else if (FireMode == eSUTFireMode_Aimed)
-  {
+
+    case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.ShotCount;
-  }
-  else if (FireMode == eSUTFireMode_Burst)
-  {
+
+    case eSUTFireMode_Burst:
     return WeaponProfile.Burst.ShotCount;
-  }
-  else if (FireMode == eSUTFireMode_Automatic)
-  {
+    
+    case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.ShotCount;
   }
   return 0;
@@ -76,20 +92,18 @@ static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
 
   WeaponProfile = GetWeaponProfile(WeaponName);
 
-  if (FireMode == eSUTFireMode_Snap)
+  switch (FireMode)
   {
+    case eSUTFireMode_Snap:
     return WeaponProfile.Snap.AimModifier;
-  }
-  else if (FireMode == eSUTFireMode_Aimed)
-  {
+
+    case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.AimModifier;
-  }
-  else if (FireMode == eSUTFireMode_Burst)
-  {
+
+    case eSUTFireMode_Burst:
     return WeaponProfile.Burst.AimModifier;
-  }
-  else if (FireMode == eSUTFireMode_Automatic)
-  {
+    
+    case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.AimModifier;
   }
   return 0;
@@ -101,20 +115,18 @@ static function int GetCritModifier(name WeaponName, eSUTFireMode FireMode)
 
   WeaponProfile = GetWeaponProfile(WeaponName);
 
-  if (FireMode == eSUTFireMode_Snap)
+  switch (FireMode)
   {
+    case eSUTFireMode_Snap:
     return WeaponProfile.Snap.CritModifier;
-  }
-  else if (FireMode == eSUTFireMode_Aimed)
-  {
+
+    case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.CritModifier;
-  }
-  else if (FireMode == eSUTFireMode_Burst)
-  {
+
+    case eSUTFireMode_Burst:
     return WeaponProfile.Burst.CritModifier;
-  }
-  else if (FireMode == eSUTFireMode_Automatic)
-  {
+    
+    case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.CritModifier;
   }
   return 0;
@@ -126,23 +138,61 @@ static function int GetSuppressionPenalty(name WeaponName, eSUTFireMode FireMode
 
   WeaponProfile = GetWeaponProfile(WeaponName);
 
-  if (FireMode == eSUTFireMode_Snap)
+  switch (FireMode)
   {
+    case eSUTFireMode_Snap:
     return WeaponProfile.Snap.SuppressionPenalty;
-  }
-  else if (FireMode == eSUTFireMode_Aimed)
-  {
+
+    case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.SuppressionPenalty;
-  }
-  else if (FireMode == eSUTFireMode_Burst)
-  {
+
+    case eSUTFireMode_Burst:
     return WeaponProfile.Burst.SuppressionPenalty;
-  }
-  else if (FireMode == eSUTFireMode_Automatic)
-  {
+    
+    case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.SuppressionPenalty;
   }
   return 0;
+}
+
+static function SmallUnitTacticsGrazeProfile GetGrazeProfile(
+  name WeaponName, name AbilityName
+)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+  local SmallUnitTacticsGrazeProfile IdealGrazeProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+
+  switch (AbilityName)
+  {
+    case 'SUT_SnapShot':
+    IdealGrazeProfile = WeaponProfile.Snap.GrazeModifier;
+    break;
+
+    case 'SUT_AimedShot':
+    IdealGrazeProfile = WeaponProfile.Aimed.GrazeModifier;
+    break;
+
+    case 'SUT_BurstShot':
+    case 'SUT_BurstFollowShot':
+    IdealGrazeProfile = WeaponProfile.Burst.GrazeModifier;
+    break;
+    
+    case 'SUT_AutoShot':
+    case 'SUT_AutoFollowShot':
+    IdealGrazeProfile = WeaponProfile.Automatic.GrazeModifier;
+    break;
+  }
+
+  if (IdealGrazeProfile.High == -1)
+  {
+    return WeaponProfile.DefaultGrazeModifier;
+  }
+  else
+  {
+    return IdealGrazeProfile;
+  }
 }
 
 static function LoadWeaponProfiles ()
@@ -168,6 +218,12 @@ static function LoadWeaponProfiles ()
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
       WeaponTemplate.Abilities.AddItem('SUT_AmbientSuppressionCancel');
       WeaponTemplate.Abilities.AddItem('SUT_FinaliseAnimation');
+
+      if (WeaponProfile.DefaultGrazeModifier.High != -1)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_WeaponConditionalGraze');
+      }
+
       if (WeaponProfile.Aimed.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_AimedShot');

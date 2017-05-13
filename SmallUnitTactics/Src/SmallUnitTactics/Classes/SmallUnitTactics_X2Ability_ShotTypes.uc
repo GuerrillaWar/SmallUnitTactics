@@ -19,8 +19,37 @@ static function array<X2DataTemplate> CreateTemplates()
 
   Templates.AddItem(AmbientSuppressionCancel());
   Templates.AddItem(AddAnimationAbility());
+  Templates.AddItem(WeaponConditionalGraze());
 
   return Templates;
+}
+
+
+static function X2AbilityTemplate WeaponConditionalGraze()
+{
+	local X2AbilityTemplate						Template;
+	local SmallUnitTactics_Effect_ConditionalGraze            GrazeEffect;
+
+	// Icon Properties
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'SUT_WeaponConditionalGraze');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_momentum";
+
+	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
+
+	GrazeEffect = new class'SmallUnitTactics_Effect_ConditionalGraze';
+	GrazeEffect.BuildPersistentEffect(1, true, false, false);
+	Template.AddTargetEffect(GrazeEffect);
+
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	//  NOTE: No visualization on purpose!
+
+	return Template;
 }
 
 // we use a wrapper function instead of checking FireMode in each individual function

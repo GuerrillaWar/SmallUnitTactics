@@ -34,6 +34,12 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Config\XComGame.ini">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Config\XComGameCore.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Config\XComGameData_WeaponData.ini">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Config\XComSmallUnitTactics.ini">
       <SubType>Content</SubType>
     </Content>
@@ -60,6 +66,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_AmbientSuppression.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_ConditionalGraze.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_PrimedGrenade.uc">
