@@ -28,7 +28,6 @@ function EventListenerReturn OnTurnBegun(Object EventData, Object EventSource, X
   `TACTICALRULES.SubmitGameState(NewGameState);
 
   `log("WILL EXPLODE SOON");
-  `XEVENTMGR.UnRegisterFromEvent(EffectObj, EventID);
   /* DetonateGrenade(Effect, SourceUnit, GameState); */
   return ELR_NoInterrupt;
 }
@@ -52,10 +51,87 @@ function EventListenerReturn OnTurnEnded(Object EventData, Object EventSource, X
   {
     `log("SHOULD EXPLODE");
     DetonateGrenade(Effect, SourceUnit, GameState);
-    `XEVENTMGR.UnRegisterFromEvent(EffectObj, EventID);
+    RemoveEffect(Effect, GameState);
   }
 
   return ELR_NoInterrupt;
+}
+
+
+function EventListenerReturn OnAbilityActivated(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
+{
+	local XComGameState_Effect Effect;
+
+	local XComGameState_Ability ActivatedAbilityState;
+  local XComGameState_Unit SourceUnit;
+  local Object EffectObj;
+  local SmallUnitTactics_GameState_Effect_PrimedGrenade NewEffectState;
+	Effect = GetOwningEffect();
+  EffectObj = self;
+	SourceUnit = XComGameState_Unit(
+    `XCOMHISTORY.GetGameStateForObjectID(
+      Effect.ApplyEffectParameters.SourceStateObjectRef.ObjectID
+    )
+  );
+
+	ActivatedAbilityState = XComGameState_Ability(EventData);
+  if (
+    (ActivatedAbilityState.OwnerStateObject.ObjectID == SourceUnit.ObjectID) &&
+    (ActivatedAbilityState.GetMyTemplateName() == 'SUT_ThrowPrimedGrenade')
+  )
+  {
+    `log("AbilityActivated Called and cleared effect + detonation");
+    RemoveEffect(Effect, GameState);
+  }
+  else
+  {
+    `log("AbilityActivated Called but not from this unit");
+  }
+
+  return ELR_NoInterrupt;
+}
+
+function EventListenerReturn OnUnitDied(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
+{
+	local XComGameState_Effect Effect;
+  local XComGameState_Unit SourceUnit;
+  local Object EffectObj;
+  local SmallUnitTactics_GameState_Effect_PrimedGrenade NewEffectState;
+
+  `log("Nothing should happen. Explosion should occur.");
+
+  return ELR_NoInterrupt;
+}
+
+
+function RemoveEffect(XComGameState_Effect Effect, XComGameState RespondingToGameState)
+{
+	local XComGameStateContext_EffectRemoved EffectRemovedState;
+	local XComGameState NewGameState;
+  local Object EffectObj;
+	local XComGameStateHistory History;
+
+  `log("Removing Effect and Unregistering");
+	History = `XCOMHISTORY;
+  EffectObj = self;
+  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'OnAbilityActivated');
+  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'PlayerTurnEnded');
+  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'UnitDied');
+  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'PlayerTurnBegun');
+
+
+  EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
+  NewGameState = History.CreateNewGameState(true, EffectRemovedState);
+  Effect.RemoveEffect(NewGameState, RespondingToGameState);
+
+  if (NewGameState.GetNumGameStateObjects() > 0)
+  {
+    `TACTICALRULES.SubmitGameState(NewGameState);
+  }
+  else
+  {
+    `XCOMHISTORY.CleanupPendingGameState(NewGameState);
+  }
 }
 
 
@@ -68,8 +144,6 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
   local XComGameState_Item SourceWeapon;
   local X2AbilityTemplate AbilityTemplate;
   local X2GrenadeTemplate GrenadeTemplate;
-	local XComGameStateContext_EffectRemoved EffectRemovedState;
-	local XComGameState NewGameState;
 	local XComGameStateHistory History;
   local StateObjectReference TargetRef;
 	local TTile                 AffectedTile;
@@ -111,23 +185,7 @@ function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceU
       AbilityTemplate = AbilityState.GetMyTemplate();
       GrenadeTemplate = X2GrenadeTemplate(SourceWeapon.GetMyTemplate());
 
-			if (class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations))
-			{
-				EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
-				NewGameState = History.CreateNewGameState(true, EffectRemovedState);
-				Effect.RemoveEffect(NewGameState, RespondingToGameState);
-
-        if (NewGameState.GetNumGameStateObjects() > 0)
-        {
-          `TACTICALRULES.SubmitGameState(NewGameState);
-
-          //  effects may have changed action availability - if a unit died, took damage, etc.
-        }
-        else
-        {
-          `XCOMHISTORY.CleanupPendingGameState(NewGameState);
-        }
-			}
+			class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, TargetLocations);
 		}
 	}
 }
