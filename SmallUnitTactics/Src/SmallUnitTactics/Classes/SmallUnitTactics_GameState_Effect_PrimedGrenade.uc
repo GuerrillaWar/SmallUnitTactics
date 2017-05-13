@@ -27,8 +27,6 @@ function EventListenerReturn OnTurnBegun(Object EventData, Object EventSource, X
   NewGameState.AddStateObject(NewEffectState);
   `TACTICALRULES.SubmitGameState(NewGameState);
 
-  `log("WILL EXPLODE SOON");
-  /* DetonateGrenade(Effect, SourceUnit, GameState); */
   return ELR_NoInterrupt;
 }
 
@@ -46,10 +44,8 @@ function EventListenerReturn OnTurnEnded(Object EventData, Object EventSource, X
     )
   );
 
-  `log("DON'T EXPLODE YET");
   if (OnExplosionTurn)
   {
-    `log("SHOULD EXPLODE");
     DetonateGrenade(Effect, SourceUnit, GameState);
     RemoveEffect(Effect, GameState);
   }
@@ -57,68 +53,13 @@ function EventListenerReturn OnTurnEnded(Object EventData, Object EventSource, X
   return ELR_NoInterrupt;
 }
 
-
-function EventListenerReturn OnAbilityActivated(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
-{
-	local XComGameState_Effect Effect;
-
-	local XComGameState_Ability ActivatedAbilityState;
-  local XComGameState_Unit SourceUnit;
-  local Object EffectObj;
-  local SmallUnitTactics_GameState_Effect_PrimedGrenade NewEffectState;
-	Effect = GetOwningEffect();
-  EffectObj = self;
-	SourceUnit = XComGameState_Unit(
-    `XCOMHISTORY.GetGameStateForObjectID(
-      Effect.ApplyEffectParameters.SourceStateObjectRef.ObjectID
-    )
-  );
-
-	ActivatedAbilityState = XComGameState_Ability(EventData);
-  if (
-    (ActivatedAbilityState.OwnerStateObject.ObjectID == SourceUnit.ObjectID) &&
-    (ActivatedAbilityState.GetMyTemplateName() == 'SUT_ThrowPrimedGrenade')
-  )
-  {
-    `log("AbilityActivated Called and cleared effect + detonation");
-    RemoveEffect(Effect, GameState);
-  }
-  else
-  {
-    `log("AbilityActivated Called but not from this unit");
-  }
-
-  return ELR_NoInterrupt;
-}
-
-function EventListenerReturn OnUnitDied(Object EventData, Object EventSource, XComGameState GameState, Name EventID)
-{
-	local XComGameState_Effect Effect;
-  local XComGameState_Unit SourceUnit;
-  local Object EffectObj;
-  local SmallUnitTactics_GameState_Effect_PrimedGrenade NewEffectState;
-
-  `log("Nothing should happen. Explosion should occur.");
-
-  return ELR_NoInterrupt;
-}
-
-
 function RemoveEffect(XComGameState_Effect Effect, XComGameState RespondingToGameState)
 {
 	local XComGameStateContext_EffectRemoved EffectRemovedState;
 	local XComGameState NewGameState;
-  local Object EffectObj;
 	local XComGameStateHistory History;
 
-  `log("Removing Effect and Unregistering");
 	History = `XCOMHISTORY;
-  EffectObj = self;
-  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'OnAbilityActivated');
-  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'PlayerTurnEnded');
-  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'UnitDied');
-  `XEVENTMGR.UnRegisterFromEvent(EffectObj, 'PlayerTurnBegun');
-
 
   EffectRemovedState = class'XComGameStateContext_EffectRemoved'.static.CreateEffectRemovedContext(Effect);
   NewGameState = History.CreateNewGameState(true, EffectRemovedState);

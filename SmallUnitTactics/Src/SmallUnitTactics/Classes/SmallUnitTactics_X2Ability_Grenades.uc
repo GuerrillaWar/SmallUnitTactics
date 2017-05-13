@@ -239,6 +239,7 @@ static function X2AbilityTemplate ThrowPrimedGrenade()
 	local X2Condition_UnitInventory         UnitInventoryCondition;
 	local X2Condition_AbilitySourceWeapon   GrenadeCondition, ProximityMineCondition;
   local X2Condition_UnitEffects           RequiredEffects;
+	local X2Effect_RemoveEffects RemoveEffects;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, 'SUT_ThrowPrimedGrenade');	
 	
@@ -279,6 +280,10 @@ static function X2AbilityTemplate ThrowPrimedGrenade()
 	RequiredEffects = new class'X2Condition_UnitEffects';
 	RequiredEffects.AddRequireEffect(class'SmallUnitTactics_Effect_PrimedGrenade'.default.EffectName, 'AA_HoldingPrimedGrenade');
 	Template.AbilityShooterConditions.AddItem(RequiredEffects);
+
+	RemoveEffects = new class'X2Effect_RemoveEffects';
+	RemoveEffects.EffectNamesToRemove.AddItem(class'SmallUnitTactics_Effect_PrimedGrenade'.default.EffectName);
+	Template.AddShooterEffect(RemoveEffects);
 
 	UnitPropertyCondition = new class'X2Condition_UnitProperty';
 	UnitPropertyCondition.ExcludeDead = false;

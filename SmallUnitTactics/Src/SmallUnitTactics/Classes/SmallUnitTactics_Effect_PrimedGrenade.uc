@@ -46,12 +46,27 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 
   EventMgr.RegisterForEvent(ListenerObj, 'PlayerTurnBegun', GrenadeEffectState.OnTurnBegun, ELD_OnStateSubmitted, , PlayerState);
   EventMgr.RegisterForEvent(ListenerObj, 'PlayerTurnEnded', GrenadeEffectState.OnTurnEnded, ELD_OnStateSubmitted, , PlayerState);
-  EventMgr.RegisterForEvent(ListenerObj, 'UnitDied', GrenadeEffectState.OnUnitDied, ELD_OnStateSubmitted, , Unit);
 
 	super.OnEffectAdded(ApplyEffectParameters, kNewTargetState, NewGameState, NewEffectState);
-
-  EventMgr.RegisterForEvent(ListenerObj, 'AbilityActivated', GrenadeEffectState.OnAbilityActivated, ELD_OnVisualizationBlockCompleted, , Unit);
 }
+
+simulated function OnEffectRemoved(const out EffectAppliedData ApplyEffectParameters, XComGameState NewGameState, bool bCleansed, XComGameState_Effect RemovedEffectState)
+{
+	local XComGameState_Ability AbilityState;
+	local XComGameState_Item ItemState;
+	local SmallUnitTactics_GameState_Effect_PrimedGrenade GrenadeEffectState;
+	local Object ListenerObj;
+	local X2EventManager EventMgr;
+
+	EventMgr = `XEVENTMGR;
+
+	super.OnEffectRemoved(ApplyEffectParameters, NewGameState, bCleansed, RemovedEffectState);
+	GrenadeEffectState = GetEffectComponent(RemovedEffectState);
+	ListenerObj = GrenadeEffectState;
+  EventMgr.UnRegisterFromEvent(ListenerObj, 'PlayerTurnEnded');
+  EventMgr.UnRegisterFromEvent(ListenerObj, 'PlayerTurnBegun');
+}
+
 
 static function SmallUnitTactics_GameState_Effect_PrimedGrenade GetEffectComponent(XComGameState_Effect Effect)
 {
@@ -61,6 +76,7 @@ static function SmallUnitTactics_GameState_Effect_PrimedGrenade GetEffectCompone
     );
 	return none;
 }
+
 
 simulated function AddX2ActionsForVisualization(XComGameState VisualizeGameState, out VisualizationTrack BuildTrack, name EffectApplyResult)
 {
