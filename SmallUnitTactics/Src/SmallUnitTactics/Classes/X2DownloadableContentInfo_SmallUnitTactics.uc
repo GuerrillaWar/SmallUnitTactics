@@ -35,6 +35,26 @@ static event OnPostMission()
   class'SmallUnitTactics_GameState_ListenerManager'.static.RefreshListeners();
 }
 
+exec function ToggleIASMText()
+{
+	class'UIDebugStateMachines'.static.GetThisScreen().ToggleVisible();
+}
+
+
+static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
+{
+	local int i;
+	local AbilitySetupData NewData;
+	i = SetupData.Find('TemplateName', 'SUT_SnapShot');
+	if (i == INDEX_NONE) { i = SetupData.Find('TemplateName', 'SUT_BurstShot'); }
+	if (i == INDEX_NONE) { i = SetupData.Find('TemplateName', 'SUT_AutoShot'); }
+	if (i == INDEX_NONE) { i = SetupData.Find('TemplateName', 'SUT_AimedShot'); }
+	if (i == INDEX_NONE) return;
+	NewData.TemplateName = 'SmallUnitTactics_IdleSuppression_DONTUSE';
+	NewData.Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate('SmallUnitTactics_IdleSuppression_DONTUSE');
+	NewData.SourceWeaponRef = SetupData[i].SourceWeaponRef;
+	SetupData.AddItem(NewData);
+}
 
 
 static function ChainAbilityTag()
