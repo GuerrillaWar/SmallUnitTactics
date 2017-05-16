@@ -37,6 +37,8 @@ static function X2AbilityTemplate WeaponConditionalGraze()
 	Template.AbilitySourceName = 'eAbilitySource_Perk';
 	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
 	Template.Hostility = eHostility_Neutral;
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
 
 	Template.AbilityToHitCalc = default.DeadEye;
 	Template.AbilityTargetStyle = default.SelfTarget;
@@ -98,7 +100,29 @@ static function X2AbilityTemplate AddShotType(
 
   // Icon Properties
   Template.bDontDisplayInAbilitySummary = true;
-  Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_standard";
+
+  switch (FireMode)
+  {
+    case eSUTFireMode_Automatic:
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_hailofbullets";
+    break;
+
+    case eSUTFireMode_Burst:
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_blindfire";
+    break;
+
+    case eSUTFireMode_Aimed:
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_snipershot";
+    break;
+
+    case eSUTFireMode_Snap:
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_standard";
+    break;
+
+    default:
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_standard";
+    break;
+  }
   Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.STANDARD_SHOT_PRIORITY;
   Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
   Template.DisplayTargetHitChance = true;

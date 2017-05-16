@@ -28,6 +28,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Config\XComAnimation.ini">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Config\XComClassData.ini">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Config\XComEditor.ini">
       <SubType>Content</SubType>
     </Content>
@@ -101,6 +104,12 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_ScreenListener_ActivateAllPods.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_UIGrazeDisplay.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_UIScreenListener_ShotHUD.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_WeaponManager.uc">
       <SubType>Content</SubType>
     </Content>
@@ -135,6 +144,12 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Condition_HasBinoculars.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Item_Binoculars.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2TargetingMethod_Prime.uc">

@@ -18,6 +18,10 @@ LocHelpText="Lay prolonged fire at the target."
 LocFriendlyName="Survey"
 LocHelpText="Spend the turn observing the battlefield, boosting your sight radius."
 
+[SUT_BinocularsSurvey X2AbilityTemplate]
+LocFriendlyName="Long Survey"
+LocHelpText="Spend the turn observing the battlefield, boosting your sight radius."
+
 [SUT_ThrowGrenade X2AbilityTemplate]
 LocFriendlyName="Throw Grenade"
 LocHelpText="Prime and throw grenade immediately. Will explode the following turn."
@@ -30,3 +34,8 @@ LocHelpText="Throw primed grenade immediately. Will explode on contact."
 LocFriendlyName="Prime Grenade"
 LocHelpText="Prime grenade. Will be forced to throw grenade immediately next turn."
 
+[SUT_Binoculars X2WeaponTemplate]
+FriendlyName="Binoculars"
+FriendlyNamePlural="Binoculars"
+BriefSummary="Binoculars give you the ability to survey the battlefield at a far greater distance, so you can plan out your approach well."
+TacticalText="Binoculars give you the ability to survey the battlefield at a greater distance."

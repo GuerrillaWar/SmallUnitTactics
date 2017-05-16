@@ -216,6 +216,7 @@ static function LoadWeaponProfiles ()
       WeaponTemplate.iClipSize = WeaponProfile.iClipSize;
 
       WeaponTemplate.Abilities.RemoveItem('StandardShot');
+      WeaponTemplate.Abilities.RemoveItem('SniperStandardFire');
       WeaponTemplate.Abilities.AddItem('SUT_AmbientSuppressionCancel');
       WeaponTemplate.Abilities.AddItem('SUT_FinaliseAnimation');
 
