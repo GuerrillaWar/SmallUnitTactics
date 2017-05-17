@@ -5,26 +5,33 @@ var UIText GrazeNumber;
 
 function InitGrazeDisplay(UITacticalHUD TacHUD)
 {
+  local string GrazeString, LabelString;
+  InitPanel();
   AnchorBottomCenter();
   Show();
-  GrazeLabel = TacHUD.Spawn(class'UIText', TacHUD).InitText('SUT_GrazeLabel');
-  GrazeLabel.SetHTMLText(
-    class'UIUtilities_Text'.static.StyleText("Graze", eUITextStyle_Tooltip_Body)
-  );
+  GrazeLabel = Spawn(class'UIText', self).InitText('SUT_GrazeLabel');
+  LabelString = "GRAZE";
+  LabelString = class'UIUtilities_Text'.static.GetSizedText(LabelString,19);
+  LabelString = class'UIUtilities_Text'.static.GetColoredText(LabelString,eUIState_Header);
   GrazeLabel.AnchorBottomCenter();
-  GrazeLabel.SetWidth(100);
-  GrazeLabel.SetHeight(100);
-  GrazeLabel.SetX(-100);
-  GrazeLabel.SetY(-100);
+  GrazeLabel.SetText(LabelString);
+  GrazeLabel.SetPosition(-235, -136);
   GrazeLabel.Show();
 
-  GrazeNumber = TacHUD.Spawn(class'UIText', TacHUD).InitText('SUT_GrazeNumber');
-  GrazeNumber.SetHTMLText(
-    class'UIUtilities_Text'.static.StyleText("40%", eUITextStyle_Tooltip_Body)
-  );
-  GrazeNumber.SetWidth(100);
-  GrazeNumber.SetHeight(100);
-  GrazeNumber.SetX(-100);
-  GrazeNumber.SetY(-100);
+  GrazeNumber = Spawn(class'UIText', self).InitText('SUT_GrazeNumber');
+  GrazeNumber.SetPosition(-235, -114);
   GrazeNumber.Show();
+
+  Hide();
+}
+
+function UpdateChance (int Chance)
+{
+  local string GrazeString, LabelString;
+
+  GrazeString = Chance $ "%";
+  GrazeString = class'UIUtilities_Text'.static.GetSizedText(GrazeString,28);
+  GrazeString = class'UIUtilities_Text'.static.GetColoredText(GrazeString,eUIState_Normal);
+  GrazeString = class'UIUtilities_Text'.static.AddFontInfo(GrazeString,false,true);
+  GrazeNumber.SetText(GrazeString);
 }
