@@ -32,29 +32,43 @@ function EventListenerReturn OnTurnBegun(Object EventData, Object EventSource, X
 function DetonateGrenade(XComGameState_Effect Effect, XComGameState_Unit SourceUnit, XComGameState RespondingToGameState)
 {
 	local XComGameState_Ability AbilityState;
-	local AvailableAction Action;
+	local AvailableAction Action, IterAction;
 	local AvailableTarget Target;
+  local GameRulesCache_Unit UnitCache;
 	local XComGameStateContext_EffectRemoved EffectRemovedState;
 	local XComGameState NewGameState;
 	local XComGameStateHistory History;
 	local TTile                 AffectedTile;
 	local XComGameState_Unit    UnitState;
   local vector ExplodeLocation;
+  local name AbilityName;
+  local int AbilityID;
   local array<vector> ExplodeLocations;
 
 	History = `XCOMHISTORY;
-	Action.AbilityObjectRef = SourceUnit.FindAbility(
-    Launched
-      ? class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
-      : class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName,
-    SourceGrenade
-  );
+  `TACTICALRULES.GetGameRulesCache_Unit(SourceUnit.GetReference(), UnitCache);
+  AbilityName = Launched
+    ? class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
+    : class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName;
+	AbilityID = SourceUnit.FindAbility(AbilityName, SourceGrenade).ObjectID;
+
+  foreach UnitCache.AvailableActions(IterAction)
+  {
+    if (IterAction.AbilityObjectRef.ObjectID == AbilityID)
+    {
+      Action = IterAction;
+    }
+  }
+  `log(AbilityName @ "ID is" @ AbilityID);
+  `log(AbilityName @ "found action ID is" @ Action.AbilityObjectRef.ObjectID);
+  `log(Action.AvailableCode);
+
 	if (Action.AbilityObjectRef.ObjectID != 0)
 	{
 		AbilityState = XComGameState_Ability(History.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID));
 		if (AbilityState != none)
 		{
-			Action.AvailableCode = 'AA_Success';
+			/* Action.AvailableCode = 'AA_Success'; */
 			AbilityState.GatherAdditionalAbilityTargetsForLocation(Effect.ApplyEffectParameters.AbilityInputContext.TargetLocations[0], Target);
 			Action.AvailableTargets.AddItem(Target);
 

@@ -54,6 +54,13 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	NewData.Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate('SmallUnitTactics_IdleSuppression_DONTUSE');
 	NewData.SourceWeaponRef = SetupData[i].SourceWeaponRef;
 	SetupData.AddItem(NewData);
+
+	i = SetupData.Find('TemplateName', 'LaunchGrenade');
+  if (i != INDEX_NONE)
+  {
+    SetupData[i].TemplateName = 'SUT_LaunchGrenade';
+    SetupData[i].Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate('SUT_LaunchGrenade');
+  }
 }
 
 

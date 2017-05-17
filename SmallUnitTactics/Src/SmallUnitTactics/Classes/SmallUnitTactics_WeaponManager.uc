@@ -257,7 +257,7 @@ static function LoadGrenadeProfiles ()
   local X2DataTemplate ItemTemplate;
   local X2GrenadeTemplate GrenadeTemplate;
   local X2ItemTemplateManager Manager;
-  local name GrenadeName;
+  local name GrenadeName, AbilityName;
 
   Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 

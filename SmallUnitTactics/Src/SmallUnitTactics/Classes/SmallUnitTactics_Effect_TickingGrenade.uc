@@ -18,7 +18,11 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	local X2EventManager EventMgr;
 	local Object ListenerObj;
   local XComGameState_Ability Ability;
+  local XComGameState_Unit SourceUnit;
+  local XComGameState_Item Weapon, Grenade, IterItem;
+  local array<XComGameState_Item> ItemList;
   local XComGameStateHistory History;
+  local X2GrenadeTemplate GrenadeTemplate;
 	local XComGameState_Player PlayerState;
 
   History = `XCOMHISTORY;
@@ -32,10 +36,35 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
       NewGameState.CreateStateObject(class'SmallUnitTactics_GameState_Effect_TickingGrenade')
     );
     GrenadeEffectState.Launched = Launched;
-    Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(
+    Ability = XComGameState_Ability(History.GetGameStateForObjectID(
       ApplyEffectParameters.AbilityStateObjectRef.ObjectID
     ));
-    GrenadeEffectState.SourceGrenade = Ability.SourceWeapon;
+    if (Launched)
+    {
+      Weapon = XComGameState_Item(History.GetGameStateForObjectID(
+        Ability.SourceWeapon.ObjectID
+      ));
+      GrenadeTemplate = X2GrenadeTemplate(Weapon.GetLoadedAmmoTemplate(Ability));
+      SourceUnit = XComGameState_Unit(History.GetGameStateForObjectID(
+        Ability.OwnerStateObject.ObjectID
+      ));
+
+      ItemList = SourceUnit.GetAllInventoryItems();
+      foreach ItemList(IterItem)
+      {
+        if (IterItem.GetMyTemplateName() == GrenadeTemplate.DataName)
+        {
+          GrenadeEffectState.SourceGrenade = IterItem.GetReference();
+          break;
+        }
+      }
+    }
+    else
+    {
+      GrenadeEffectState.SourceGrenade = Ability.SourceWeapon;
+    }
+    `log("From Ability" @ Ability.GetMyTemplateName());
+    `log("Grenade from " @ GrenadeEffectState.SourceGrenade.ObjectID);
 		NewEffectState.AddComponentObject(GrenadeEffectState);
 		NewGameState.AddStateObject(GrenadeEffectState);
 	}
