@@ -121,12 +121,12 @@ state IdleSuppressionTurn
 {
 	simulated function BeginState(name PrevStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
 	}
 
 	simulated event EndState(name NextStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
 	}
 Begin:
 	bOverrideReturnToState = true;
@@ -145,12 +145,12 @@ state IdleSuppressionStart
 {
 	simulated function BeginState(name PrevStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
 	}
 
 	simulated event EndState(name NextStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
 	}
 
 	
@@ -254,6 +254,7 @@ state IdleSuppressionStart
 			TowardsTarget.Z = 0;
 			TowardsTarget = Normal(TowardsTarget);
 			Params.DesiredEndingAtom.Rotation = QuatFromRotator(Rotator(TowardsTarget));
+			Params.PlayRate = 1.33f;
 			FinishAnimNodeSequence = UnitPawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
 			Unit.bSteppingOutOfCover = true;
 		}
@@ -280,7 +281,7 @@ state IdleSuppressionStart
 				Params.AnimName = 'NO_FireStart';
 				break;
 			}
-
+			Params.PlayRate = 1.33f;
 			if( UnitPawn.GetAnimTreeController().CanPlayAnimation(Params.AnimName) )
 			{
 				FinishAnimNodeSequence = UnitPawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
@@ -294,6 +295,7 @@ state IdleSuppressionStart
 				}
 			}
 		}
+		PatchUpSingleSequence(FinishAnimNodeSequence.AnimSeq);
 		return FinishAnimNodeSequence;
 	}
 
@@ -319,12 +321,12 @@ state IdleSuppression
 {
 	simulated function BeginState(name PrevStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
 	}
 
 	simulated event EndState(name NextStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
 	}
 
 	simulated function Name GetSuppressAnimName()
@@ -383,20 +385,26 @@ function PatchUpSequence(name SeqName)
 static function AnimSequence PatchUpSingleSequence(AnimSequence Sequence)
 {
 	local int i;
-	local bool bDidAPatch;
-	bDidAPatch = false;
+	local SmallUnitTactics_AnimNotify_CineScript CSEvent;
+	local string OrigLabel;
 	for (i = 0; i < Sequence.Notifies.Length; i++)
 	{
 		if (Sequence.Notifies[i].Notify.Class.Name == 'AnimNotify_ViewShake')
 		{
 			// create a replacement with the same outer as the original notify and using that as a template
 			Sequence.Notifies[i].Notify = new (Sequence.Notifies[i].Notify.Outer) class'SmallUnitTactics_AnimNotify_ViewShake' (Sequence.Notifies[i].Notify);
-			bDidAPatch = true;
 		}
-	}
-	if (bDidAPatch)
-	{
-		`log("Changed" @ PathName(Sequence));
+// TODO: add this when the EventLabel is un-privated
+// soldier9 says the access modifier isn't enforced at runtime, so maybe?
+		else if (Sequence.Notifies[i].Notify.Class.Name == 'AnimNotify_CinescriptEvent')
+		{
+			
+			OrigLabel = AnimNotify_CinescriptEvent(Sequence.Notifies[i].Notify).EventLabel;
+			`log("ConstantCombat: changed" @ OrigLabel);
+			CSEvent = new (Sequence.Notifies[i].Notify.Outer) class'SmallUnitTactics_AnimNotify_CineScript';
+			CSEvent.EventLabel = OrigLabel;
+			Sequence.Notifies[i].Notify = CSEvent;
+		}
 	}
 	return Sequence;
 }
@@ -406,12 +414,12 @@ state IdleSuppressionEnd
 {
 	simulated function BeginState(name PrevStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ PrevStateName $ "->" $ GetStateName());
 	}
 
 	simulated event EndState(name NextStateName)
 	{
-		`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
+		//`log("SmallUnitTactics_IdleSuppression:" @ GetFuncName() @ GetStateName() $ "->" $ NextStateName);
 	}
 
 	// we use a function here to have local variables available
@@ -469,6 +477,7 @@ state IdleSuppressionEnd
 					Params.AnimName = 'NO_FireStop';
 					break;
 			}
+			Params.PlayRate = 1.33f;
 			if (UnitPawn.GetAnimTreeController().CanPlayAnimation(Params.AnimName))
 			{
 				SeqToPlay = UnitPawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
@@ -476,6 +485,7 @@ state IdleSuppressionEnd
 
 
 		}
+		PatchUpSingleSequence(SeqToPlay.AnimSeq);
 		return SeqToPlay;
 	}
 

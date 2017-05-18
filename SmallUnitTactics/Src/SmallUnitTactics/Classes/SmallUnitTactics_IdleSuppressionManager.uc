@@ -32,9 +32,10 @@ static function EventListenerReturn OnAbilityActivated(Object EventData, Object 
 	return ELR_NoInterrupt;
 }
 
-static simulated static function InsertWaitActionToShooterTrack(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+simulated static function InsertWaitActionToShooterTrack(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
 {
 	local XComGameStateContext_Ability AbilityContext;
+	local VisualizationTrack Track;
 	local SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd WaitAction;
 	local int TrackIndex;
 	AbilityContext = XComGameStateContext_Ability(VisualizeGameState.GetContext());
@@ -45,8 +46,13 @@ static simulated static function InsertWaitActionToShooterTrack(XComGameState Vi
 		// unfortunately, everything that does manual timing will look off. Consider using X2Action_WaitForAbilityEffect instead
 		if (XGUnit(OutVisualizationTracks[TrackIndex].TrackActor) != none)
 		{
-			WaitAction = SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd(class'SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd'.static.CreateVisualizationAction(AbilityContext));
-			OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(0, WaitAction);
+			Track = OutVisualizationTracks[TrackIndex];
+			// unreal compiler weirdness
+			if (!`XCOMVISUALIZATIONMGR.TrackHasActionOfType(Track, class'SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd'))
+			{
+				WaitAction = SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd(class'SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd'.static.CreateVisualizationAction(AbilityContext));
+				OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(0, WaitAction);
+			}
 		}
 	}
 }
