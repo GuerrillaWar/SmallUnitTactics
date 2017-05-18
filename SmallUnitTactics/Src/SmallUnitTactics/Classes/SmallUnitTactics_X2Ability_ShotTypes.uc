@@ -17,6 +17,9 @@ static function array<X2DataTemplate> CreateTemplates()
   AddShotPair(Templates, 'SUT_BurstShot', 'SUT_BurstFollowShot', 1, eSUTFireMode_Burst);
   AddShotPair(Templates, 'SUT_AutoShot', 'SUT_AutoFollowShot', 2, eSUTFireMode_Automatic);
 
+  AddShotPair(Templates, 'SUT_OverwatchSnapShot', '', 1, eSUTFireMode_Snap, true);
+  AddShotPair(Templates, 'SUT_OverwatchBurstShot', 'SUT_OverwatchBurstFollowShot', 1, eSUTFireMode_Burst, true);
+
   Templates.AddItem(AmbientSuppressionCancel());
   Templates.AddItem(AddAnimationAbility());
   Templates.AddItem(WeaponConditionalGraze());
@@ -55,14 +58,21 @@ static function X2AbilityTemplate WeaponConditionalGraze()
 }
 
 // we use a wrapper function instead of checking FireMode in each individual function
-static function AddShotPair(out array<X2DataTemplate> Templates, name TriggerAbilityName, name FollowUpAbilityName, int AbilityCost, eSUTFireMode FireMode)
+static function AddShotPair(
+  out array<X2DataTemplate> Templates,
+  name TriggerAbilityName,
+  name FollowUpAbilityName,
+  int AbilityCost,
+  eSUTFireMode FireMode,
+  bool bOverwatch = false
+)
 {
   local X2AbilityTemplate Template;
   class'SmallUnitTactics_AbilityManager'.static.RegisterAbilityPair(
-    TriggerAbilityName, FollowUpAbilityName, FireMode
+    TriggerAbilityName, FollowUpAbilityName, FireMode, bOverwatch
   );
 
-  Template = AddShotType(TriggerAbilityName, AbilityCost, FireMode);
+  Template = AddShotType(TriggerAbilityName, AbilityCost, FireMode, bOverwatch);
   if (FollowUpAbilityName != '')
   {
 	Template.PostActivationEvents.AddItem(FollowUpAbilityName);
@@ -75,21 +85,34 @@ static function AddShotPair(out array<X2DataTemplate> Templates, name TriggerAbi
 
   if (FollowUpAbilityName != '')
   {
-	Template = AddFollowShot(FollowUpAbilityName, FireMode);
+	Template = AddFollowShot(FollowUpAbilityName, FireMode, bOverwatch);
 	Templates.AddItem(Template);
+  }
+
+  if (bOverwatch)
+  {
+    Template = AddOverwatchAbility(
+      FireMode == eSUTFireMode_Snap ? 'SUT_OverwatchSnap' : 'SUT_OverwatchBurst',
+      TriggerAbilityName,
+      FireMode
+    );
+    Templates.AddItem(Template);
   }
 }
 
 static function X2AbilityTemplate AddShotType(
   name AbilityName,
   int AbilityCost,
-  eSUTFireMode FireMode
+  eSUTFireMode FireMode,
+  bool bOverwatch
 )
 {
   local X2AbilityTemplate                 Template;	
   local SmallUnitTactics_AbilityCost_BurstAmmoCost  AmmoCost;
   local X2AbilityCost_ActionPoints        ActionPointCost;
+  local X2AbilityCost_ReserveActionPoints ReserveActionPointCost;
   local array<name>                       SkipExclusions;
+  local X2AbilityTrigger_Event            EventTrigger;
   local X2Effect_Knockback				KnockbackEffect;
   local SmallUnitTactics_Effect_AmbientSuppression SuppressionEffect;
   local X2Condition_Visibility            VisibilityCondition;
@@ -128,7 +151,18 @@ static function X2AbilityTemplate AddShotType(
   Template.DisplayTargetHitChance = true;
   Template.AbilitySourceName = 'eAbilitySource_Standard';    // color of the icon
   // Activated by a button press; additionally, tells the AI this is an activatable
-  Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+  
+  if (bOverwatch)
+  {
+    EventTrigger = new class'X2AbilityTrigger_Event';
+    EventTrigger.EventObserverClass = class'X2TacticalGameRuleset_MovementObserver';
+    EventTrigger.MethodName = 'InterruptGameState';
+    Template.AbilityTriggers.AddItem(EventTrigger);
+  }
+  else
+  {
+    Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+  }
 
   SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
   SkipExclusions.AddItem(class'X2StatusEffects'.default.BurningName);
@@ -138,8 +172,24 @@ static function X2AbilityTemplate AddShotType(
   // Can only shoot visible enemies
   VisibilityCondition = new class'X2Condition_Visibility';
   VisibilityCondition.bRequireGameplayVisible = true;
-  VisibilityCondition.bAllowSquadsight = true;
+
+  if (bOverwatch)
+  {
+    VisibilityCondition.bDisablePeeksOnMovement = true;
+  }
+  else
+  {
+    VisibilityCondition.bAllowSquadsight = true;
+  }
+
   Template.AbilityTargetConditions.AddItem(VisibilityCondition);
+
+	Template.AbilityTargetConditions.AddItem(new class'X2Condition_EverVigilant');
+	Template.AbilityTargetConditions.AddItem(
+    class'X2Ability_DefaultAbilitySet'.static.OverwatchTargetEffectsCondition()
+  );
+
+
   // Can't target dead; Can't target friendlies
   Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
   // Can't shoot while dead
@@ -148,10 +198,20 @@ static function X2AbilityTemplate AddShotType(
   Template.AbilityTargetStyle = default.SimpleSingleTarget;
 
   // Action Point
-  ActionPointCost = new class'X2AbilityCost_ActionPoints';
-  ActionPointCost.iNumPoints = AbilityCost;
-  ActionPointCost.bConsumeAllPoints = false;
-  Template.AbilityCosts.AddItem(ActionPointCost);	
+  if (bOverwatch)
+  {
+    ReserveActionPointCost = new class'X2AbilityCost_ReserveActionPoints';
+    ReserveActionPointCost.iNumPoints = 1;
+    ReserveActionPointCost.AllowedTypes.AddItem(class'X2CharacterTemplateManager'.default.OverwatchReserveActionPoint);
+    Template.AbilityCosts.AddItem(ReserveActionPointCost);
+  }
+  else
+  {
+    ActionPointCost = new class'X2AbilityCost_ActionPoints';
+    ActionPointCost.iNumPoints = AbilityCost;
+    ActionPointCost.bConsumeAllPoints = false;
+    Template.AbilityCosts.AddItem(ActionPointCost);	
+  }
 
   // Ammo
   AmmoCost = new class'SmallUnitTactics_AbilityCost_BurstAmmoCost';	
@@ -161,7 +221,7 @@ static function X2AbilityTemplate AddShotType(
   Template.bAllowBonusWeaponEffects = true;
 
   // Weapon Upgrade Compatibility
-  Template.bAllowFreeFireWeaponUpgrade = true;                        // Flag that permits action to become 'free action' via 'Hair Trigger' or similar upgrade / effects
+  Template.bAllowFreeFireWeaponUpgrade = !bOverwatch;                        // Flag that permits action to become 'free action' via 'Hair Trigger' or similar upgrade / effects
 
   //  Put holo target effect first because if the target dies from this shot, it will be too late to notify the effect.
   Template.AddTargetEffect(class'X2Ability_GrenadierAbilitySet'.static.HoloTargetEffect());
@@ -173,39 +233,60 @@ static function X2AbilityTemplate AddShotType(
 	/* WeaponDamageEffect = new class'X2Effect_ApplyWeaponDamage'; */
 	/* Template.AddTargetEffect(WeaponDamageEffect); */
 
-  SuppressionEffect = new class'SmallUnitTactics_Effect_AmbientSuppression';
-  SuppressionEffect.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
-  SuppressionEffect.bRemoveWhenTargetDies = true;
-  SuppressionEffect.FireMode = FireMode;
-  SuppressionEffect.bApplyOnMiss = true;
-  SuppressionEffect.bApplyOnHit = true;
-  SuppressionEffect.bRemoveWhenSourceDamaged = false;
-  SuppressionEffect.bBringRemoveVisualizationForward = true;
-  SuppressionEffect.SetDisplayInfo(ePerkBuff_Penalty, default.SuppressionTargetEffectName, default.SuppressionTargetEffectDesc, Template.IconImage);
-  /* SuppressionEffect.SetSourceDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, default.SuppressionSourceEffectDesc, Template.IconImage); */
-  Template.AddTargetEffect(SuppressionEffect);
+  if (!bOverwatch)
+  {
+    SuppressionEffect = new class'SmallUnitTactics_Effect_AmbientSuppression';
+    SuppressionEffect.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+    SuppressionEffect.bRemoveWhenTargetDies = true;
+    SuppressionEffect.FireMode = FireMode;
+    SuppressionEffect.bApplyOnMiss = true;
+    SuppressionEffect.bApplyOnHit = true;
+    SuppressionEffect.bRemoveWhenSourceDamaged = false;
+    SuppressionEffect.bBringRemoveVisualizationForward = true;
+    SuppressionEffect.SetDisplayInfo(ePerkBuff_Penalty, default.SuppressionTargetEffectName, default.SuppressionTargetEffectDesc, Template.IconImage);
+    /* SuppressionEffect.SetSourceDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, default.SuppressionSourceEffectDesc, Template.IconImage); */
+    Template.AddTargetEffect(SuppressionEffect);
+  }
 
   ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
   ToHitCalc.FireMode = FireMode;
+  if (bOverwatch) { ToHitCalc.bReactionFire = true; }
   Template.AbilityToHitCalc = ToHitCalc;
   Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
   // this was wrong -- only used for visualization
   // Template.bIsASuppressionEffect = true;
 
-  // Targeting Method
-  Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
-  Template.bUsesFiringCamera = true;
-  Template.CinescriptCameraType = "StandardGunFiring";	
-
   Template.AssociatedPassives.AddItem('HoloTargeting');
+  // Targeting Method
+  if (bOverwatch)
+  {
+    Template.AbilitySourceName = 'eAbilitySource_Standard';
+    Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_overwatch";
+    Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.OVERWATCH_PRIORITY;
+    Template.bDisplayInUITooltip = false;
+    Template.bDisplayInUITacticalText = false;
+    Template.DisplayTargetHitChance = false;
 
-  // MAKE IT LIVE!
-  Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-  Template.BuildVisualizationFn = FirstShot_BuildVisualization;
-  Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+    Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+    Template.BuildVisualizationFn = FirstShot_BuildVisualization;
+    Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+  }
+  else
+  {
+    Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
+    Template.bUsesFiringCamera = true;
+    Template.CinescriptCameraType = "StandardGunFiring";	
 
-  Template.bDisplayInUITooltip = false;
-  Template.bDisplayInUITacticalText = false;
+    // MAKE IT LIVE!
+    Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+    Template.BuildVisualizationFn = FirstShot_BuildVisualization;
+    Template.BuildInterruptGameStateFn = TypicalAbility_BuildInterruptGameState;
+
+    Template.bDisplayInUITooltip = false;
+    Template.bDisplayInUITacticalText = false;
+    Template.PostActivationEvents.AddItem('StandardShotActivated');
+  }
 
   KnockbackEffect = new class'X2Effect_Knockback';
   KnockbackEffect.KnockbackDistance = 2;
@@ -213,7 +294,6 @@ static function X2AbilityTemplate AddShotType(
   Template.AddTargetEffect(KnockbackEffect);
   Template.DamagePreviewFn = FireDamagePreview;
 
-  Template.PostActivationEvents.AddItem('StandardShotActivated');
 
   return Template;	
 }
@@ -305,7 +385,8 @@ static function EventListenerReturn MultiShotListener(Object EventData, Object E
 
 static function X2AbilityTemplate AddFollowShot(
   name AbilityName,
-  eSUTFireMode FireMode
+  eSUTFireMode FireMode,
+  bool bOverwatch
 )
 {
   local X2AbilityTemplate                 Template;	
@@ -361,6 +442,7 @@ static function X2AbilityTemplate AddFollowShot(
 	Template.AbilityTriggers.AddItem(Trigger);
 
 	ToHitCalc = new class'SmallUnitTactics_AbilityToHitCalc_StandardAim';
+  if (bOverwatch) { ToHitCalc.bReactionFire = true; }
   ToHitCalc.FireMode = FireMode;
 	Template.AbilityToHitCalc = ToHitCalc;
 	Template.AbilityToHitOwnerOnMissCalc = ToHitCalc;
@@ -385,7 +467,6 @@ static function X2AbilityTemplate AddFollowShot(
   KnockbackEffect.bUseTargetLocation = true;
   Template.AddTargetEffect(KnockbackEffect);
   Template.DamagePreviewFn = FireDamagePreview;
-
 
   Template.PostActivationEvents.AddItem(AbilityName);
 
@@ -662,6 +743,9 @@ static function EventListenerReturn SingleShotListener(Object EventData, Object 
 }
 
 
+
+
+
 simulated function Finalize_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
 {
 	local XComGameStateHistory      History;
@@ -693,3 +777,94 @@ simulated function Finalize_BuildVisualization(XComGameState VisualizeGameState,
 
 	OutVisualizationTracks.AddItem(SourceTrack);
 }
+
+
+static function X2AbilityTemplate AddOverwatchAbility(
+  name AbilityName,
+  name ShotName,
+  eSUTFireMode FireMode
+)
+{
+	local X2AbilityTemplate                 Template;	
+	local SmallUnitTactics_AbilityCost_BurstAmmoCost                AmmoCost;
+	local X2AbilityCost_ActionPoints        ActionPointCost;
+	local X2Effect_ReserveActionPoints      ReserveActionPointsEffect;
+	local array<name>                       SkipExclusions;
+	local X2Effect_CoveringFire             CoveringFireEffect;
+	local X2Condition_AbilityProperty       CoveringFireCondition;
+	local X2Condition_UnitProperty          ConcealedCondition;
+	local X2Effect_SetUnitValue             UnitValueEffect;
+	local X2Condition_UnitEffects           SuppressedCondition;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
+	
+	Template.bDontDisplayInAbilitySummary = true;
+
+  AmmoCost = new class'SmallUnitTactics_AbilityCost_BurstAmmoCost';	
+  AmmoCost.FireMode = FireMode;
+	AmmoCost.bFreeCost = true;                  //  ammo is consumed by the shot, not by this, but this should verify ammo is available
+  Template.AbilityCosts.AddItem(AmmoCost);
+
+	
+	ActionPointCost = new class'X2AbilityCost_ActionPoints';
+	ActionPointCost.bConsumeAllPoints = true;   //  this will guarantee the unit has at least 1 action point
+	ActionPointCost.bFreeCost = true;           //  ReserveActionPoints effect will take all action points away
+	ActionPointCost.DoNotConsumeAllEffects.Length = 0;
+	ActionPointCost.DoNotConsumeAllSoldierAbilities.Length = 0;
+	Template.AbilityCosts.AddItem(ActionPointCost);
+	
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+
+	SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+	Template.AddShooterEffectExclusions(SkipExclusions);
+
+	/* SuppressedCondition = new class'X2Condition_UnitEffects'; */
+	/* SuppressedCondition.AddExcludeEffect(class'X2Effect_Suppression'.default.EffectName, 'AA_UnitIsSuppressed'); */
+	/* Template.AbilityShooterConditions.AddItem(SuppressedCondition); */
+	
+	ReserveActionPointsEffect = new class'X2Effect_ReserveOverwatchPoints';
+	Template.AddTargetEffect(ReserveActionPointsEffect);
+	Template.DefaultKeyBinding = class'UIUtilities_Input'.const.FXS_KEY_Y;
+
+	CoveringFireEffect = new class'X2Effect_CoveringFire';
+	CoveringFireEffect.AbilityToActivate = ShotName;
+	CoveringFireEffect.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+	CoveringFireCondition = new class'X2Condition_AbilityProperty';
+	CoveringFireCondition.OwnerHasSoldierAbilities.AddItem('CoveringFire');
+	CoveringFireEffect.TargetConditions.AddItem(CoveringFireCondition);
+	Template.AddTargetEffect(CoveringFireEffect);
+
+	ConcealedCondition = new class'X2Condition_UnitProperty';
+	ConcealedCondition.ExcludeFriendlyToSource = false;
+	ConcealedCondition.IsConcealed = true;
+	UnitValueEffect = new class'X2Effect_SetUnitValue';
+	UnitValueEffect.UnitName = class'X2Ability_DefaultAbilitySet'.default.ConcealedOverwatchTurn;
+	UnitValueEffect.CleanupType = eCleanup_BeginTurn;
+	UnitValueEffect.NewValueToSet = 1;
+	UnitValueEffect.TargetConditions.AddItem(ConcealedCondition);
+	Template.AddTargetEffect(UnitValueEffect);
+
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_HideIfOtherAvailable;
+	/* Template.HideIfAvailable.AddItem('LongWatch'); */
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_overwatch";
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.OVERWATCH_PRIORITY;
+	Template.bNoConfirmationWithHotKey = true;
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+	Template.AbilityConfirmSound = "Unreal2DSounds_OverWatch";
+
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = class'X2Ability_DefaultAbilitySet'.static.OverwatchAbility_BuildVisualization;
+	Template.CinescriptCameraType = "Overwatch";
+
+	Template.Hostility = eHostility_Defensive;
+
+	return Template;	
+}
+
+

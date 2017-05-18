@@ -38,6 +38,7 @@ struct SmallUnitTacticsWeaponProfile
   var name WeaponName;
   var int iClipSize;
   var WeaponDamageValue BulletProfile;
+  var eSUTFireMode OverwatchFireMode;
   var SmallUnitTacticsGrazeProfile DefaultGrazeModifier;
   var SmallUnitTacticsShotProfile Aimed;
   var SmallUnitTacticsShotProfile Snap;
@@ -219,6 +220,23 @@ static function LoadWeaponProfiles ()
       WeaponTemplate.Abilities.RemoveItem('SniperStandardFire');
       WeaponTemplate.Abilities.AddItem('SUT_AmbientSuppressionCancel');
       WeaponTemplate.Abilities.AddItem('SUT_FinaliseAnimation');
+
+      WeaponTemplate.Abilities.RemoveItem('Overwatch');
+      WeaponTemplate.Abilities.RemoveItem('OverwatchShot');
+      WeaponTemplate.Abilities.RemoveItem('SniperOverwatch');
+      WeaponTemplate.Abilities.RemoveItem('SniperOverwatchShot');
+
+      if (WeaponProfile.OverwatchFireMode == eSUTFireMode_Snap)
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnap');
+        WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnapShot');
+      }
+      else
+      {
+        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurst');
+        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurstShot');
+        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurstFollowShot');
+      }
 
       if (WeaponProfile.DefaultGrazeModifier.High != -1)
       {

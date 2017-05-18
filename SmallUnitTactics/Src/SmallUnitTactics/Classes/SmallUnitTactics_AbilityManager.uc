@@ -11,13 +11,17 @@ struct AbilityRelation
   var name TriggerAbility;
   var name FollowUpAbility;
   var eSUTFireMode FireMode;
+  var bool bOverwatch;
 };
 
 var array<AbilityRelation> arrAbilityConfigs;
 
 
 // registers ability info. use when creating templates
-static function RegisterAbilityPair(name TriggerName, name FollowUpName, eSUTFireMode FireMode)
+static function RegisterAbilityPair(
+  name TriggerName, name FollowUpName,
+  eSUTFireMode FireMode, bool bOverwatch
+)
 {
   local SmallUnitTactics_AbilityManager CDO;
   local AbilityRelation NewRelation;
@@ -28,6 +32,7 @@ static function RegisterAbilityPair(name TriggerName, name FollowUpName, eSUTFir
   NewRelation.TriggerAbility = TriggerName;
   NewRelation.FollowUpAbility = FollowUpName;
   NewRelation.FireMode = FireMode;
+  NewRelation.bOverwatch = bOverwatch;
   CDO.arrAbilityConfigs.AddItem(NewRelation);
 }
 

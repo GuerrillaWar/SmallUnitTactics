@@ -10,6 +10,18 @@ LocHelpText="Take a hastily aimed single shot at the target."
 LocFriendlyName="Burst Fire"
 LocHelpText="Take a burst shot at the target."
 
+[SUT_OverwatchSnap X2AbilityTemplate]
+LocFriendlyName="Overwatch Single Shot"
+LocHelpText="React to movement with single shot fire."
+
+[SUT_BurstShot X2AbilityTemplate]
+LocFriendlyName="Burst Fire"
+LocHelpText="Take a burst shot at the target."
+
+[SUT_OverwatchBurst X2AbilityTemplate]
+LocFriendlyName="Overwatch Burst Shot"
+LocHelpText="React to movement with burst fire."
+
 [SUT_AutoShot X2AbilityTemplate]
 LocFriendlyName="Automatic Fire"
 LocHelpText="Lay prolonged fire at the target."
