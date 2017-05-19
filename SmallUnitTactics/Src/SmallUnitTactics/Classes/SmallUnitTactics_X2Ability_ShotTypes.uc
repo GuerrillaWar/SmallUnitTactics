@@ -270,7 +270,7 @@ static function X2AbilityTemplate AddShotType(
   {
     Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
     Template.bUsesFiringCamera = true;
-    Template.CinescriptCameraType = "StandardGunFiring";	
+    /* Template.CinescriptCameraType = "StandardGunFiring"; */	
 
     // MAKE IT LIVE!
     Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
@@ -299,7 +299,10 @@ simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState
 	local XComGameStateContext Context;
 	local int TrackIndex, ActionIndex;
 	local X2Action_EnterCover EnterCoverAction;
+  local SmallUnitTactics_X2Action_SpawnOTSCamera CameraAction;
 	local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
+	local XGUnit  ShooterVisualizer, TargetVisualizer;
+  local StateObjectReference ShooterRef, TargetRef;
 
 	// Build the first shot of Rapid Fire's visualization
 	TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
@@ -314,6 +317,25 @@ simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState
       // Found the Source track
       break;
     }
+  }
+
+  if (`BATTLE.ProfileSettingsGlamCam())
+  {
+    ShooterRef = AbilityContext.InputContext.SourceObject;
+    TargetRef = AbilityContext.InputContext.PrimaryTarget;
+
+    ShooterVisualizer = XGUnit(`XCOMHISTORY.GetVisualizer(ShooterRef.ObjectID));
+    TargetVisualizer = XGUnit(`XCOMHISTORY.GetVisualizer(TargetRef.ObjectID));
+
+    CameraAction = SmallUnitTactics_X2Action_SpawnOTSCamera(
+      class'SmallUnitTactics_X2Action_SpawnOTSCamera'.static.CreateVisualizationAction(
+        Context, OutVisualizationTracks[TrackIndex].TrackActor
+      )
+    );
+    CameraAction.SUT_Shooter = ShooterVisualizer;
+    CameraAction.SUT_Target = TargetVisualizer;
+
+    OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(0, CameraAction);
   }
 
   for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
@@ -705,7 +727,7 @@ static function X2AbilityTemplate AddAnimationAbility()
   Template.bDisplayInUITacticalText = false;
 
   Template.bUsesFiringCamera = true;
-  Template.CinescriptCameraType = "StandardGunFiring";	
+  /* Template.CinescriptCameraType = "StandardGunFiring"; */	
 
   return Template;	
 }

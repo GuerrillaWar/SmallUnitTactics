@@ -152,7 +152,13 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_SpawnImpactActor.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_SpawnOTSCamera.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_WaitForIdleSuppressionEnd.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Camera_TimedOTSCamera.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Condition_HasBinoculars.uc">
