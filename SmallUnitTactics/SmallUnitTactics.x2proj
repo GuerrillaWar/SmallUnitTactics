@@ -43,6 +43,9 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Config\XComGameCore.ini">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Config\XComGameData_CharacterStats.ini">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Config\XComGameData_WeaponData.ini">
       <SubType>Content</SubType>
     </Content>
