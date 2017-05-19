@@ -31,7 +31,7 @@ static function X2AbilityTemplate AddSurvey(bool bBinoculars) {
   Template.IconImage = bBinoculars
     ? "img:///UILibrary_PerkIcons.UIPerk_evervigilant"
     : "img:///UILibrary_PerkIcons.UIPerk_overwatch";
-  Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.STANDARD_SHOT_PRIORITY;
+  Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.EVAC_PRIORITY + 10;
 
   if (bBinoculars)
   {

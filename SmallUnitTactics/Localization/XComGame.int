@@ -1,18 +1,18 @@
 [SUT_AimedShot X2AbilityTemplate]
 LocFriendlyName="Aimed Shot"
-LocHelpText="Take a carefully aimed single shot at the target."
+LocHelpText="Take carefully aimed point fire at the target."
 
 [SUT_SnapShot X2AbilityTemplate]
 LocFriendlyName="Snap Shot"
-LocHelpText="Take a hastily aimed single shot at the target."
+LocHelpText="Take hastily aimed point fire at the target."
 
 [SUT_BurstShot X2AbilityTemplate]
 LocFriendlyName="Burst Fire"
 LocHelpText="Take a burst shot at the target."
 
 [SUT_OverwatchSnap X2AbilityTemplate]
-LocFriendlyName="Overwatch Single Shot"
-LocHelpText="React to movement with single shot fire."
+LocFriendlyName="Overwatch"
+LocHelpText="React to movement with point fire."
 
 [SUT_BurstShot X2AbilityTemplate]
 LocFriendlyName="Burst Fire"

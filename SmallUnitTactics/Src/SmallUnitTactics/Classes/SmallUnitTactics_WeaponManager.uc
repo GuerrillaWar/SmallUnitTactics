@@ -4,7 +4,6 @@ enum eSUTFireMode
 {
   eSUTFireMode_Aimed,
   eSUTFireMode_Snap,
-  eSUTFireMode_Burst,
   eSUTFireMode_Automatic,
 };
 
@@ -38,14 +37,25 @@ struct SmallUnitTacticsWeaponProfile
   var name WeaponName;
   var int iClipSize;
   var WeaponDamageValue BulletProfile;
-  var eSUTFireMode OverwatchFireMode;
+  var int OverwatchAimModifier;
   var SmallUnitTacticsGrazeProfile DefaultGrazeModifier;
   var SmallUnitTacticsShotProfile Aimed;
   var SmallUnitTacticsShotProfile Snap;
-  var SmallUnitTacticsShotProfile Burst;
   var SmallUnitTacticsShotProfile Automatic;
 };
 
+struct SmallUnitTacticsArmorProfile
+{
+  var name ArmorName;
+  var name ArmorAbilityName;
+  var int HP;
+  var int ArmorChance;
+  var int ArmorMitigation;
+  var int Dodge;
+  var int Mobility;
+};
+
+var config array<SmallUnitTacticsArmorProfile>   arrArmorProfiles;
 var config array<SmallUnitTacticsWeaponProfile>   arrWeaponProfiles;
 var config array<name>                            arrTimedGrenades;
 
@@ -77,14 +87,19 @@ static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
 
     case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.ShotCount;
-
-    case eSUTFireMode_Burst:
-    return WeaponProfile.Burst.ShotCount;
     
     case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.ShotCount;
   }
   return 0;
+}
+
+static function int GetOverwatchAimModifier(name WeaponName)
+{
+  local SmallUnitTacticsWeaponProfile WeaponProfile;
+
+  WeaponProfile = GetWeaponProfile(WeaponName);
+  return WeaponProfile.OverwatchAimModifier;
 }
 
 static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
@@ -100,9 +115,6 @@ static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
 
     case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.AimModifier;
-
-    case eSUTFireMode_Burst:
-    return WeaponProfile.Burst.AimModifier;
     
     case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.AimModifier;
@@ -123,9 +135,6 @@ static function int GetCritModifier(name WeaponName, eSUTFireMode FireMode)
 
     case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.CritModifier;
-
-    case eSUTFireMode_Burst:
-    return WeaponProfile.Burst.CritModifier;
     
     case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.CritModifier;
@@ -146,9 +155,6 @@ static function int GetSuppressionPenalty(name WeaponName, eSUTFireMode FireMode
 
     case eSUTFireMode_Aimed:
     return WeaponProfile.Aimed.SuppressionPenalty;
-
-    case eSUTFireMode_Burst:
-    return WeaponProfile.Burst.SuppressionPenalty;
     
     case eSUTFireMode_Automatic:
     return WeaponProfile.Automatic.SuppressionPenalty;
@@ -168,18 +174,15 @@ static function SmallUnitTacticsGrazeProfile GetGrazeProfile(
   switch (AbilityName)
   {
     case 'SUT_SnapShot':
+    case 'SUT_SnapFollowShot':
     IdealGrazeProfile = WeaponProfile.Snap.GrazeModifier;
     break;
 
     case 'SUT_AimedShot':
+    case 'SUT_AimedFollowShot':
     IdealGrazeProfile = WeaponProfile.Aimed.GrazeModifier;
     break;
 
-    case 'SUT_BurstShot':
-    case 'SUT_BurstFollowShot':
-    IdealGrazeProfile = WeaponProfile.Burst.GrazeModifier;
-    break;
-    
     case 'SUT_AutoShot':
     case 'SUT_AutoFollowShot':
     IdealGrazeProfile = WeaponProfile.Automatic.GrazeModifier;
@@ -226,17 +229,9 @@ static function LoadWeaponProfiles ()
       WeaponTemplate.Abilities.RemoveItem('SniperOverwatch');
       WeaponTemplate.Abilities.RemoveItem('SniperOverwatchShot');
 
-      if (WeaponProfile.OverwatchFireMode == eSUTFireMode_Snap)
-      {
-        WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnap');
-        WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnapShot');
-      }
-      else
-      {
-        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurst');
-        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurstShot');
-        WeaponTemplate.Abilities.AddItem('SUT_OverwatchBurstFollowShot');
-      }
+      WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnap');
+      WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnapShot');
+      WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnapFollowShot');
 
       if (WeaponProfile.DefaultGrazeModifier.High != -1)
       {
@@ -246,17 +241,13 @@ static function LoadWeaponProfiles ()
       if (WeaponProfile.Aimed.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_AimedShot');
+        WeaponTemplate.Abilities.AddItem('SUT_AimedFollowShot');
       }
 
       if (WeaponProfile.Snap.ShotCount > 0)
       {
         WeaponTemplate.Abilities.AddItem('SUT_SnapShot');
-      }
-
-      if (WeaponProfile.Burst.ShotCount > 0)
-      {
-        WeaponTemplate.Abilities.AddItem('SUT_BurstShot');
-        WeaponTemplate.Abilities.AddItem('SUT_BurstFollowShot');
+        WeaponTemplate.Abilities.AddItem('SUT_SnapFollowShot');
       }
 
       if (WeaponProfile.Automatic.ShotCount > 0)
@@ -311,6 +302,94 @@ static function LoadGrenadeProfiles ()
       GrenadeTemplate.Abilities.AddItem(
         class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
       );
+    }
+  }
+}
+
+
+static function LoadArmorProfiles ()
+{
+  local array<X2DataTemplate> ItemTemplates;
+  local array<X2AbilityTemplate> AbilityTemplates;
+  local X2DataTemplate ItemTemplate;
+  local X2ArmorTemplate ArmorTemplate;
+  local X2AbilityTemplate AbilityTemplate;
+  local X2AbilityTemplateManager AbilityManager;
+  local SmallUnitTacticsArmorProfile ArmorProfile;
+	local X2Effect_PersistentStatChange		PersistentStatChangeEffect;
+  local X2ItemTemplateManager Manager;
+  local name AbilityName;
+
+  AbilityManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+  Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+
+  ItemTemplates.Length = 0;
+  Manager.FindDataTemplateAllDifficulties('KevlarArmor', ItemTemplates);
+  foreach ItemTemplates(ItemTemplate)
+  {
+    ArmorTemplate = X2ArmorTemplate(ItemTemplate);
+    ArmorTemplate.Abilities.AddItem('KevlarArmorStats');
+  }
+
+
+  foreach default.arrArmorProfiles(ArmorProfile)
+  {
+    ItemTemplates.Length = 0;
+    Manager.FindDataTemplateAllDifficulties(ArmorProfile.ArmorName, ItemTemplates);
+    foreach ItemTemplates(ItemTemplate)
+    {
+      ArmorTemplate = X2ArmorTemplate(ItemTemplate);
+      ArmorTemplate.UIStatMarkups.Length = 0;
+
+      if (ArmorProfile.HP != 0)
+      {
+        ArmorTemplate.SetUIStatMarkup(class'XLocalizedData'.default.HealthLabel, eStat_HP, ArmorProfile.HP, true);
+      }
+      
+      if (ArmorProfile.Mobility != 0)
+      {
+        ArmorTemplate.SetUIStatMarkup(class'XLocalizedData'.default.MobilityLabel, eStat_Mobility, ArmorProfile.Mobility);
+      }
+
+      if (ArmorProfile.Dodge != 0) {
+        ArmorTemplate.SetUIStatMarkup(class'XLocalizedData'.default.DodgeLabel, eStat_Dodge, ArmorProfile.Dodge);
+      }
+    }
+
+    AbilityTemplates.Length = 0;
+    AbilityManager.FindAbilityTemplateAllDifficulties(ArmorProfile.ArmorAbilityName, AbilityTemplates);
+    foreach AbilityTemplates(AbilityTemplate)
+    {
+      AbilityTemplate.AbilityTargetEffects.Length = 0;
+
+      PersistentStatChangeEffect = new class'X2Effect_PersistentStatChange';
+      PersistentStatChangeEffect.BuildPersistentEffect(1, true, false, false);
+
+      if (ArmorProfile.ArmorChance != 0)
+      {
+        PersistentStatChangeEffect.AddPersistentStatChange(eStat_ArmorChance, ArmorProfile.ArmorChance);
+      }
+
+      if (ArmorProfile.ArmorMitigation != 0)
+      {
+        PersistentStatChangeEffect.AddPersistentStatChange(eStat_ArmorMitigation, ArmorProfile.ArmorMitigation);
+      }
+
+      if (ArmorProfile.HP != 0)
+      {
+        PersistentStatChangeEffect.AddPersistentStatChange(eStat_HP, ArmorProfile.HP);
+      }
+      
+      if (ArmorProfile.Mobility != 0)
+      {
+        PersistentStatChangeEffect.AddPersistentStatChange(eStat_Mobility, ArmorProfile.Mobility);
+      }
+
+      if (ArmorProfile.Dodge != 0) {
+        PersistentStatChangeEffect.AddPersistentStatChange(eStat_Dodge, ArmorProfile.Dodge);
+      }
+
+      AbilityTemplate.AddTargetEffect(PersistentStatChangeEffect);
     }
   }
 }

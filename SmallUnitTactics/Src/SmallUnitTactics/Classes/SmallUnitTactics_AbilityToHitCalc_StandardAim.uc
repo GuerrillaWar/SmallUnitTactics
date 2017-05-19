@@ -26,6 +26,7 @@ protected function int GetHitChance(XComGameState_Ability kAbility, AvailableTar
 	local TTile UnitTileLocation, TargetTileLocation;
 	local ECoverType NextTileOverCoverType;
 	local int TileDistance, WeaponCritModifier, WeaponAimModifier;
+	local int OverwatchAimModifier;
 
 	`log("=" $ GetFuncName() $ "=", bDebugLog, 'XCom_HitRolls');
 	m_bDebugModifiers = bDebugLog;
@@ -328,6 +329,14 @@ protected function int GetHitChance(XComGameState_Ability kAbility, AvailableTar
 		FinalAdjust = m_ShotBreakdown.ResultTable[eHit_Success] * GetReactionAdjust(UnitState, TargetState);
 		AddModifier(-int(FinalAdjust), AbilityTemplate.LocFriendlyName);
 		AddReactionFlatModifier(UnitState, TargetState);
+
+    OverwatchAimModifier = class'SmallUnitTactics_WeaponManager'.static.GetAimModifier(
+      SourceWeapon.GetMyTemplateName(), FireMode
+    );
+    if (OverwatchAimModifier != 0)
+    {
+      AddModifier(OverwatchAimModifier, AbilityTemplate.LocFriendlyName, eHit_Success);
+    }
 	}
 	else if (FinalMultiplier != 1.0f)
 	{

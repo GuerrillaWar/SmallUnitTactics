@@ -12,13 +12,11 @@ static function array<X2DataTemplate> CreateTemplates()
   // this leaves us with two choices -- trigger the finalize in the first step (currently done)
   // or add follow ups for every ability, that don't ever trigger
   // this makes two more abilities, so that's not ideal
-  AddShotPair(Templates, 'SUT_AimedShot', '', 2, eSUTFireMode_Aimed);
-  AddShotPair(Templates, 'SUT_SnapShot', '', 1, eSUTFireMode_Snap);
-  AddShotPair(Templates, 'SUT_BurstShot', 'SUT_BurstFollowShot', 1, eSUTFireMode_Burst);
+  AddShotPair(Templates, 'SUT_AimedShot', 'SUT_AimedFollowShot', 2, eSUTFireMode_Aimed);
+  AddShotPair(Templates, 'SUT_SnapShot', 'SUT_SnapFollowShot', 1, eSUTFireMode_Snap);
   AddShotPair(Templates, 'SUT_AutoShot', 'SUT_AutoFollowShot', 2, eSUTFireMode_Automatic);
 
-  AddShotPair(Templates, 'SUT_OverwatchSnapShot', '', 1, eSUTFireMode_Snap, true);
-  AddShotPair(Templates, 'SUT_OverwatchBurstShot', 'SUT_OverwatchBurstFollowShot', 1, eSUTFireMode_Burst, true);
+  AddShotPair(Templates, 'SUT_OverwatchSnapShot', 'SUT_OverwatchSnapFollowShot', 1, eSUTFireMode_Snap, true);
 
   Templates.AddItem(AmbientSuppressionCancel());
   Templates.AddItem(AddAnimationAbility());
@@ -127,10 +125,6 @@ static function X2AbilityTemplate AddShotType(
   switch (FireMode)
   {
     case eSUTFireMode_Automatic:
-    Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_hailofbullets";
-    break;
-
-    case eSUTFireMode_Burst:
     Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_blindfire";
     break;
 
