@@ -179,10 +179,13 @@ static function X2AbilityTemplate AddShotType(
 
   Template.AbilityTargetConditions.AddItem(VisibilityCondition);
 
-	Template.AbilityTargetConditions.AddItem(new class'X2Condition_EverVigilant');
-	Template.AbilityTargetConditions.AddItem(
-    class'X2Ability_DefaultAbilitySet'.static.OverwatchTargetEffectsCondition()
-  );
+  if (bOverwatch)
+  {
+    Template.AbilityTargetConditions.AddItem(new class'X2Condition_EverVigilant');
+    Template.AbilityTargetConditions.AddItem(
+      class'X2Ability_DefaultAbilitySet'.static.OverwatchTargetEffectsCondition()
+    );
+  }
 
 
   // Can't target dead; Can't target friendlies
