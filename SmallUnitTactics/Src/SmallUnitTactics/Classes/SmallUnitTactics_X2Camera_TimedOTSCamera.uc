@@ -12,10 +12,12 @@ function UpdateCamera(float DeltaTime)
 	
 	if(Lifetime >= 0.0)
 	{
+    `log("Tick Camera: Lifetime (" @ Lifetime @ ") - " @ DeltaTime);
 		Lifetime -= DeltaTime;
 
 		if(Lifetime <= 0.0)
 		{
+      `log("Removing Camera From Stack");
 			HasTimerExpired = true;
 			RemoveSelfFromCameraStack();
 		}
@@ -26,5 +28,4 @@ defaultproperties
 {
 	Priority=eCameraPriority_GameActions
 	Lifetime=2.0
-	HasArrived=false
 }

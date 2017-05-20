@@ -226,8 +226,7 @@ static function LoadWeaponProfiles ()
 
       WeaponTemplate.Abilities.RemoveItem('Overwatch');
       WeaponTemplate.Abilities.RemoveItem('OverwatchShot');
-      WeaponTemplate.Abilities.RemoveItem('SniperOverwatch');
-      WeaponTemplate.Abilities.RemoveItem('SniperOverwatchShot');
+      WeaponTemplate.Abilities.RemoveItem('SniperRifleOverwatch');
 
       WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnap');
       WeaponTemplate.Abilities.AddItem('SUT_OverwatchSnapShot');

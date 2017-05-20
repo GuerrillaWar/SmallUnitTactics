@@ -10,8 +10,9 @@ simulated state Executing
 Begin:
 
   Cam = XComCamera(GetALocalPlayerController().PlayerCamera);
+  `log("Trying camera stack");
   if(Cam != none) {
-
+    `log("Found Camera");
     ShooterCam = new class'SmallUnitTactics_X2Camera_TimedOTSCamera';
     ShooterCam.FiringUnit = SUT_Shooter;
     /* ShooterCam.CandidateMatineeCommentPrefix = ShooterState.GetMyTemplate().strTargetingMatineePrefix; */
@@ -20,6 +21,7 @@ Begin:
     ShooterCam.SetTarget(SUT_Target);
 
     Cam.CameraStack.AddCamera(ShooterCam);
+    `log("Pushed to Camera Stack");
   }
 
   CompleteAction();

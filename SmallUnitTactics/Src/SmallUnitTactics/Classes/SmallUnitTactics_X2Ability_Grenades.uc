@@ -2,6 +2,7 @@ class SmallUnitTactics_X2Ability_Grenades extends X2Ability config(SmallUnitTact
 
 var name DetonateGrenadeAbilityName;
 var name DetonateLaunchedGrenadeAbilityName;
+var localized string PrimedGrenadeFlyover;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -216,7 +217,7 @@ static function X2AbilityTemplate PrimeGrenade()
 	Template.bShowActivation = true;
 	Template.bShowPostActivation = true;
 	Template.bSkipFireAction = true;
-  Template.LocFlyOverText = "Priming Grenade";
+  Template.LocFlyOverText = default.PrimedGrenadeFlyover;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 

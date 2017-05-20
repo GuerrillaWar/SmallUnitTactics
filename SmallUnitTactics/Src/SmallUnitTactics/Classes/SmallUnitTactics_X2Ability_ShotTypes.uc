@@ -2,6 +2,7 @@ class SmallUnitTactics_X2Ability_ShotTypes extends X2Ability;
 
 var localized string SuppressionTargetEffectName;
 var localized string SuppressionTargetEffectDesc;
+var localized string OverwatchFlyover;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -270,7 +271,7 @@ static function X2AbilityTemplate AddShotType(
   {
     Template.TargetingMethod = class'X2TargetingMethod_OverTheShoulder';
     Template.bUsesFiringCamera = true;
-    /* Template.CinescriptCameraType = "StandardGunFiring"; */	
+    Template.CinescriptCameraType = "StandardGunFiring";	
 
     // MAKE IT LIVE!
     Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
@@ -299,6 +300,8 @@ simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState
 	local XComGameStateContext Context;
 	local int TrackIndex, ActionIndex;
 	local X2Action_EnterCover EnterCoverAction;
+	local X2Action_EndCinescriptCamera EndCinescriptCameraAction;
+  local X2Action_WaitForAbilityEffect WaitAction;
   local SmallUnitTactics_X2Action_SpawnOTSCamera CameraAction;
 	local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
 	local XGUnit  ShooterVisualizer, TargetVisualizer;
@@ -319,39 +322,41 @@ simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState
     }
   }
 
-  if (`BATTLE.ProfileSettingsGlamCam())
-  {
-    ShooterRef = AbilityContext.InputContext.SourceObject;
-    TargetRef = AbilityContext.InputContext.PrimaryTarget;
-
-    ShooterVisualizer = XGUnit(`XCOMHISTORY.GetVisualizer(ShooterRef.ObjectID));
-    TargetVisualizer = XGUnit(`XCOMHISTORY.GetVisualizer(TargetRef.ObjectID));
-
-    CameraAction = SmallUnitTactics_X2Action_SpawnOTSCamera(
-      class'SmallUnitTactics_X2Action_SpawnOTSCamera'.static.CreateVisualizationAction(
-        Context, OutVisualizationTracks[TrackIndex].TrackActor
-      )
-    );
-    CameraAction.SUT_Shooter = ShooterVisualizer;
-    CameraAction.SUT_Target = TargetVisualizer;
-
-    OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(0, CameraAction);
-  }
-
   for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
   {
     EnterCoverAction = X2Action_EnterCover(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
-    if (EnterCoverAction != none)
+		EndCinescriptCameraAction = X2Action_EndCinescriptCamera(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    if (
+      EnterCoverAction != none ||
+      EndCinescriptCameraAction != none
+    )
     {
       OutVisualizationTracks[TrackIndex].TrackActions.Remove(ActionIndex, 1);
     }
   }
-  ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
-    class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
-      Context, OutVisualizationTracks[TrackIndex].TrackActor
-    )
-  );
-  OutVisualizationTracks[TrackIndex].TrackActions.AddItem(ManualRunAction);
+
+  for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
+  {
+    if( OutVisualizationTracks[TrackIndex].StateObject_NewState.ObjectID == AbilityContext.InputContext.PrimaryTarget.ObjectID)
+    {
+      // Found the TargetTrack track
+      break;
+    }
+  }
+
+  for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
+  {
+    WaitAction = X2Action_WaitForAbilityEffect(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    if (WaitAction != none)
+    {
+      ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
+        class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
+          Context, OutVisualizationTracks[TrackIndex].TrackActor
+        )
+      );
+      OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(ActionIndex + 1, ManualRunAction);
+    }
+  }
 }
 
 
@@ -533,14 +538,28 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
 		}
 	}
 
-  ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
-    class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
-      Context, OutVisualizationTracks[TrackIndex].TrackActor
-    )
-  );
-  OutVisualizationTracks[TrackIndex].TrackActions.AddItem(ManualRunAction);
+  for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
+  {
+    if( OutVisualizationTracks[TrackIndex].StateObject_NewState.ObjectID == AbilityContext.InputContext.PrimaryTarget.ObjectID)
+    {
+      // Found the TargetTrack track
+      break;
+    }
+  }
 
-
+  for( ActionIndex = OutVisualizationTracks[TrackIndex].TrackActions.Length - 1; ActionIndex >= 0; --ActionIndex )
+  {
+    WaitAction = X2Action_WaitForAbilityEffect(OutVisualizationTracks[TrackIndex].TrackActions[ActionIndex]);
+    if (WaitAction != none)
+    {
+      ManualRunAction = SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun(
+        class'SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun'.static.CreateVisualizationAction(
+          Context, OutVisualizationTracks[TrackIndex].TrackActor
+        )
+      );
+      OutVisualizationTracks[TrackIndex].TrackActions.InsertItem(ActionIndex + 1, ManualRunAction);
+    }
+  }
 
   // TARGET TRACK EDITS
 	for( TrackIndex = 0; TrackIndex < OutVisualizationTracks.Length; ++TrackIndex )
@@ -556,6 +575,7 @@ simulated function FollowShot_BuildVisualization(XComGameState VisualizeGameStat
       }
     }
 	}
+
 }
 
 
@@ -766,16 +786,22 @@ simulated function Finalize_BuildVisualization(XComGameState VisualizeGameState,
 {
 	local XComGameStateHistory      History;
 	local XComGameStateContext_Ability  Context;
-
+	local X2AbilityTemplate             AbilityTemplate;
+	local AbilityInputContext           AbilityContext;
 	local VisualizationTrack        EmptyTrack;
-
 	local VisualizationTrack        SourceTrack;
-
 	local StateObjectReference          ShootingUnitRef;	
 	local Actor                     ShooterVisualizer;
 
+
+	local X2Camera_Cinescript            CinescriptCamera;
+  local X2Action_EndCinescriptCamera CinescriptEndAction;
+	local string                         PreviousCinescriptCameraType;
+
 	History = `XCOMHISTORY;
 	Context = XComGameStateContext_Ability(VisualizeGameState.GetContext());
+	AbilityContext = Context.InputContext;
+	AbilityTemplate = class'XComGameState_Ability'.static.GetMyTemplateManager().FindAbilityTemplate(AbilityContext.AbilityTemplateName);
 
 	ShootingUnitRef = Context.InputContext.SourceObject;
 
@@ -790,6 +816,13 @@ simulated function Finalize_BuildVisualization(XComGameState VisualizeGameState,
 
 
 	class'X2Action_EnterCover'.static.AddToVisualizationTrack(SourceTrack, Context);
+
+	PreviousCinescriptCameraType = AbilityTemplate.CinescriptCameraType;
+	AbilityTemplate.CinescriptCameraType = "StandardGunFiring";
+	CinescriptCamera = class'X2Camera_Cinescript'.static.CreateCinescriptCameraForAbility(Context);
+	CinescriptEndAction = X2Action_EndCinescriptCamera( class'X2Action_EndCinescriptCamera'.static.AddToVisualizationTrack( SourceTrack, Context ) );
+	CinescriptEndAction.CinescriptCamera = CinescriptCamera;
+	AbilityTemplate.CinescriptCameraType = PreviousCinescriptCameraType;
 
 	OutVisualizationTracks.AddItem(SourceTrack);
 }
@@ -820,7 +853,6 @@ static function X2AbilityTemplate AddOverwatchAbility(
   AmmoCost.FireMode = FireMode;
 	AmmoCost.bFreeCost = true;                  //  ammo is consumed by the shot, not by this, but this should verify ammo is available
   Template.AbilityCosts.AddItem(AmmoCost);
-
 	
 	ActionPointCost = new class'X2AbilityCost_ActionPoints';
 	ActionPointCost.bConsumeAllPoints = true;   //  this will guarantee the unit has at least 1 action point
@@ -873,6 +905,7 @@ static function X2AbilityTemplate AddOverwatchAbility(
 	Template.bDisplayInUITooltip = false;
 	Template.bDisplayInUITacticalText = false;
 	Template.AbilityConfirmSound = "Unreal2DSounds_OverWatch";
+  Template.LocFlyOverText = default.OverwatchFlyover;
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = class'X2Ability_DefaultAbilitySet'.static.OverwatchAbility_BuildVisualization;

@@ -1,6 +1,10 @@
 [SmallUnitTactics_X2Ability_ShotTypes]
 SuppressionTargetEffectName="Incoming Fire"
 SuppressionTargetEffectDesc="Suffering <Ability:AmbientSuppressionPenalty/> penalty to aim from incoming fire."
+OverwatchFlyOver="Overwatch"
+
+[SmallUnitTactics_X2Ability_Grenades]
+PrimedGrenadeFlyOver="Primed Grenade"
 
 [SmallUnitTactics_X2Ability_Survey]
 SurveyEffectName="Surveying"
