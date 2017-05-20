@@ -360,7 +360,7 @@ static function X2DataTemplate LaunchGrenade()
 	StandardAim.bAllowCrit = false;
 	Template.AbilityToHitCalc = StandardAim;
 	
-	Template.bUseLaunchedGrenadeEffects = true;
+	Template.bUseLaunchedGrenadeEffects = false;
 	Template.bHideAmmoWeaponDuringFire = true; // hide the grenade
 	
 	CursorTarget = new class'X2AbilityTarget_Cursor';
