@@ -305,10 +305,7 @@ simulated function FirstShot_BuildVisualization(XComGameState VisualizeGameState
 	local X2Action_EnterCover EnterCoverAction;
 	local X2Action_EndCinescriptCamera EndCinescriptCameraAction;
   local X2Action_WaitForAbilityEffect WaitAction;
-  local SmallUnitTactics_X2Action_SpawnOTSCamera CameraAction;
 	local SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun ManualRunAction;
-	local XGUnit  ShooterVisualizer, TargetVisualizer;
-  local StateObjectReference ShooterRef, TargetRef;
 
 	// Build the first shot of Rapid Fire's visualization
 	TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
@@ -846,7 +843,6 @@ static function X2AbilityTemplate AddOverwatchAbility(
 	local X2Condition_AbilityProperty       CoveringFireCondition;
 	local X2Condition_UnitProperty          ConcealedCondition;
 	local X2Effect_SetUnitValue             UnitValueEffect;
-	local X2Condition_UnitEffects           SuppressedCondition;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
 	

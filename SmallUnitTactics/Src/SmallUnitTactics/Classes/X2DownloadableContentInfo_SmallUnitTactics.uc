@@ -5,12 +5,9 @@ static event OnPostTemplatesCreated()
   `log("SmallUnitTactics :: Present And Correct");
 
   class'SmallUnitTactics_WeaponManager'.static.LoadWeaponProfiles();
-  class'SmallUnitTactics_WeaponManager'.static.LoadGrenadeProfiles();
   class'SmallUnitTactics_WeaponManager'.static.LoadArmorProfiles();
   class'SmallUnitTactics_CharacterManager'.static.UpdateCharacterProfiles();
-  class'SmallUnitTactics_CharacterManager'.static.AddSoldierAbilities();
   class'SmallUnitTactics_CharacterManager'.static.SetDetectionRadius();
-  class'SmallUnitTactics_WeaponManager'.static.LockdownAbilitiesWhenPrimedGrenadeHeld();
   ChainAbilityTag();
 }
 
@@ -46,13 +43,6 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 {
 	local int i;
 	local AbilitySetupData NewData;
-	i = SetupData.Find('TemplateName', 'LaunchGrenade');
-  if (i != INDEX_NONE)
-  {
-    SetupData[i].TemplateName = 'SUT_LaunchGrenade';
-    SetupData[i].Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate('SUT_LaunchGrenade');
-  }
-
 	i = SetupData.Find('TemplateName', 'SUT_SnapShot');
 	if (i == INDEX_NONE) { i = SetupData.Find('TemplateName', 'SUT_BurstShot'); }
 	if (i == INDEX_NONE) { i = SetupData.Find('TemplateName', 'SUT_AutoShot'); }

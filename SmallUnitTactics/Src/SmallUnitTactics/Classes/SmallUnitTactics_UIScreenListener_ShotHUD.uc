@@ -7,10 +7,8 @@ var int LastChance;
 
 event OnInit(UIScreen Screen)
 {
-  local Object ThisObj;
 	local XComPresentationLayer Pres;
 
-  ThisObj = self;
   TacHUD = UITacticalHUD(Screen);
 	Pres = XComPresentationLayer(TacHUD.Movie.Pres);
   Pres.SubscribeToUIUpdate(UpdateGrazeDisplay);
@@ -80,14 +78,12 @@ simulated function UpdateGrazeDisplay()
 
 event OnRemoved(UIScreen Screen)
 {
-  local Object ThisObj;
 	local XComPresentationLayer Pres;
 
 	Pres = XComPresentationLayer(TacHUD.Movie.Pres);
   Pres.UnsubscribeToUIUpdate(UpdateGrazeDisplay);
   TacHUD = none;
   GrazeDisplay = none;
-  ThisObj = self;
 }
 
 defaultproperties

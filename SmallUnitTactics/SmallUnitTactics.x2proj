@@ -86,18 +86,6 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_ConditionalGraze.uc">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_PrimedGrenade.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_Effect_TickingGrenade.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_Effect_PrimedGrenade.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_Effect_TickingGrenade.uc">
-      <SubType>Content</SubType>
-    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_GameState_ListenerManager.uc">
       <SubType>Content</SubType>
     </Content>
@@ -125,9 +113,6 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2AbilityTag.uc">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_Grenades.uc">
-      <SubType>Content</SubType>
-    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_IdleSuppressionVisualization.uc">
       <SubType>Content</SubType>
     </Content>
@@ -137,19 +122,7 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_ShotTypes.uc">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Ability_Survey.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_FireNoExplode.uc">
-      <SubType>Content</SubType>
-    </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_ManualPermitNextVisualizationBlockToRun.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_ShowTickingGrenade.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_SpawnImpactActor.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Action_SpawnOTSCamera.uc">
@@ -159,15 +132,6 @@ Alters weaponry in tactical to have multiple fire modes, ambient suppression, an
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Camera_TimedOTSCamera.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Condition_HasBinoculars.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2Item_Binoculars.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\SmallUnitTactics\Classes\SmallUnitTactics_X2TargetingMethod_Prime.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\SmallUnitTactics\Classes\UIDebugStateMachines.uc">

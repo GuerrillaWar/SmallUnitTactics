@@ -57,7 +57,7 @@ struct SmallUnitTacticsArmorProfile
 
 var config array<SmallUnitTacticsArmorProfile>   arrArmorProfiles;
 var config array<SmallUnitTacticsWeaponProfile>   arrWeaponProfiles;
-var config array<name>                            arrTimedGrenades;
+
 
 static function SmallUnitTacticsWeaponProfile GetWeaponProfile(
   name WeaponName
@@ -73,6 +73,7 @@ static function SmallUnitTacticsWeaponProfile GetWeaponProfile(
     }
   }
 }
+
 
 static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
 {
@@ -94,6 +95,7 @@ static function int GetShotCount(name WeaponName, eSUTFireMode FireMode)
   return 0;
 }
 
+
 static function int GetOverwatchAimModifier(name WeaponName)
 {
   local SmallUnitTacticsWeaponProfile WeaponProfile;
@@ -101,6 +103,7 @@ static function int GetOverwatchAimModifier(name WeaponName)
   WeaponProfile = GetWeaponProfile(WeaponName);
   return WeaponProfile.OverwatchAimModifier;
 }
+
 
 static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
 {
@@ -122,6 +125,7 @@ static function int GetAimModifier(name WeaponName, eSUTFireMode FireMode)
   return 0;
 }
 
+
 static function int GetCritModifier(name WeaponName, eSUTFireMode FireMode)
 {
   local SmallUnitTacticsWeaponProfile WeaponProfile;
@@ -142,6 +146,7 @@ static function int GetCritModifier(name WeaponName, eSUTFireMode FireMode)
   return 0;
 }
 
+
 static function int GetSuppressionPenalty(name WeaponName, eSUTFireMode FireMode)
 {
   local SmallUnitTacticsWeaponProfile WeaponProfile;
@@ -161,6 +166,7 @@ static function int GetSuppressionPenalty(name WeaponName, eSUTFireMode FireMode
   }
   return 0;
 }
+
 
 static function SmallUnitTacticsGrazeProfile GetGrazeProfile(
   name WeaponName, name AbilityName
@@ -198,6 +204,7 @@ static function SmallUnitTacticsGrazeProfile GetGrazeProfile(
     return IdealGrazeProfile;
   }
 }
+
 
 static function LoadWeaponProfiles ()
 {
@@ -259,53 +266,6 @@ static function LoadWeaponProfiles ()
 }
 
 
-static function LoadGrenadeProfiles ()
-{
-  local array<X2DataTemplate> ItemTemplates;
-  local X2DataTemplate ItemTemplate;
-  local X2GrenadeTemplate GrenadeTemplate;
-  local X2ItemTemplateManager Manager;
-  local name GrenadeName, AbilityName;
-
-  Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
-
-  foreach default.arrTimedGrenades(GrenadeName)
-  {
-    ItemTemplates.Length = 0;
-    Manager.FindDataTemplateAllDifficulties(GrenadeName, ItemTemplates);
-    foreach ItemTemplates(ItemTemplate)
-    {
-      GrenadeTemplate = X2GrenadeTemplate(ItemTemplate);
-      GrenadeTemplate.Abilities.RemoveItem('ThrowGrenade');
-      GrenadeTemplate.Abilities.AddItem('SUT_ThrowGrenade');
-      GrenadeTemplate.Abilities.AddItem('SUT_PrimeGrenade');
-      GrenadeTemplate.Abilities.AddItem('SUT_ThrowPrimedGrenade');
-      if (GrenadeTemplate.AbilityIconOverrides.Length > 0)
-      {
-        GrenadeTemplate.AddAbilityIconOverride(
-          'SUT_ThrowGrenade',
-          GrenadeTemplate.AbilityIconOverrides[0].OverrideIcon
-        );
-        GrenadeTemplate.AddAbilityIconOverride(
-          'SUT_ThrowPrimedGrenade',
-          GrenadeTemplate.AbilityIconOverrides[0].OverrideIcon
-        );
-        GrenadeTemplate.AddAbilityIconOverride(
-          'SUT_LaunchGrenade',
-          GrenadeTemplate.AbilityIconOverrides[0].OverrideIcon
-        );
-      }
-      GrenadeTemplate.Abilities.AddItem(
-        class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateGrenadeAbilityName
-      );
-      GrenadeTemplate.Abilities.AddItem(
-        class'SmallUnitTactics_X2Ability_Grenades'.default.DetonateLaunchedGrenadeAbilityName
-      );
-    }
-  }
-}
-
-
 static function LoadArmorProfiles ()
 {
   local array<X2DataTemplate> ItemTemplates;
@@ -317,7 +277,6 @@ static function LoadArmorProfiles ()
   local SmallUnitTacticsArmorProfile ArmorProfile;
 	local X2Effect_PersistentStatChange		PersistentStatChangeEffect;
   local X2ItemTemplateManager Manager;
-  local name AbilityName;
 
   AbilityManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
   Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
@@ -329,7 +288,6 @@ static function LoadArmorProfiles ()
     ArmorTemplate = X2ArmorTemplate(ItemTemplate);
     ArmorTemplate.Abilities.AddItem('KevlarArmorStats');
   }
-
 
   foreach default.arrArmorProfiles(ArmorProfile)
   {
@@ -389,53 +347,6 @@ static function LoadArmorProfiles ()
       }
 
       AbilityTemplate.AddTargetEffect(PersistentStatChangeEffect);
-    }
-  }
-}
-
-
-static function LockdownAbilitiesWhenPrimedGrenadeHeld ()
-{
-  local array<X2DataTemplate> DataTemplates;
-  local X2DataTemplate DataTemplate;
-  local X2AbilityTemplate AbilityTemplate;
-  local X2AbilityTemplateManager Manager;
-  local array<name> AbilityNames;
-  local name AbilityName;
-  local X2Condition_UnitEffects           ExcludeEffects;
-  local int Index;
-  local bool bInputAbility;
-
-  Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
-  Manager.GetTemplateNames(AbilityNames);
-
-  foreach AbilityNames(AbilityName)
-  {
-    if (
-      AbilityName == 'SUT_ThrowPrimedGrenade' ||
-      AbilityName == 'SUT_DetonateGrenade' ||
-      AbilityName == 'SUT_DetonateLaunchedGrenade'
-    )
-    {
-      continue;
-    }
-    DataTemplates.Length = 0;
-    Manager.FindDataTemplateAllDifficulties(AbilityName, DataTemplates);
-    foreach DataTemplates(DataTemplate)
-    {
-      AbilityTemplate = X2AbilityTemplate(DataTemplate);
-
-      for( Index = 0; Index < AbilityTemplate.AbilityTriggers.Length && !bInputAbility; ++Index )
-      {
-        bInputAbility = AbilityTemplate.AbilityTriggers[Index].IsA('X2AbilityTrigger_PlayerInput');
-      }
-
-      if (bInputAbility)
-      {
-        ExcludeEffects = new class'X2Condition_UnitEffects';
-        ExcludeEffects.AddExcludeEffect(class'SmallUnitTactics_Effect_PrimedGrenade'.default.EffectName, 'AA_HoldingPrimedGrenade');
-        AbilityTemplate.AbilityShooterConditions.AddItem(ExcludeEffects);
-      }
     }
   }
 }

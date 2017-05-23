@@ -34,13 +34,12 @@ function int GetAimModifierFromAbility(XComGameState_Ability SourceAbility)
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
-	local XComGameState_Unit SourceUnit, TargetUnit;
+	local XComGameState_Unit SourceUnit;
 	local XComGameStateContext_Ability AbilityContext;
 
 	// override X2Effect_Sppression code, but not X2Effect_Persistent one
 	super(X2Effect_Persistent).OnEffectAdded(ApplyEffectParameters, kNewTargetState, NewGameState, NewEffectState);
 
-	TargetUnit = XComGameState_Unit(kNewTargetState);
 	SourceUnit = XComGameState_Unit(NewGameState.CreateStateObject(class'XComGameState_Unit', ApplyEffectParameters.SourceStateObjectRef.ObjectID));
 	AbilityContext = XComGameStateContext_Ability(NewGameState.GetContext());
 	SourceUnit.m_SuppressionAbilityContext = AbilityContext;

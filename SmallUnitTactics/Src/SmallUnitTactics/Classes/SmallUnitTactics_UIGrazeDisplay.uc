@@ -5,7 +5,7 @@ var UIText GrazeNumber;
 
 function InitGrazeDisplay(UITacticalHUD TacHUD)
 {
-  local string GrazeString, LabelString;
+  local string LabelString;
   InitPanel();
   AnchorBottomCenter();
   Show();
@@ -27,7 +27,7 @@ function InitGrazeDisplay(UITacticalHUD TacHUD)
 
 function UpdateChance (int Chance)
 {
-  local string GrazeString, LabelString;
+  local string GrazeString;
 
   GrazeString = Chance $ "%";
   GrazeString = class'UIUtilities_Text'.static.GetSizedText(GrazeString,28);

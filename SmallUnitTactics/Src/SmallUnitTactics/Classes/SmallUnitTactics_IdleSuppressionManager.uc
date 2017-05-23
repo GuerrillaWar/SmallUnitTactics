@@ -65,14 +65,11 @@ simulated static function InsertWaitActionToShooterTrack(XComGameState Visualize
 function bool ShouldFireSuppression(XComGameState_Unit UnitState, out Actor TargetActor)
 {
 	local int iVisualizedState;
-	local XComGameStateVisualizationMgr VisualizationMgr;
 	local XComGameState_Unit TargetState;
 	local XComGameStateContext_Ability FakeContext;
 	local XComGameStateHistory History;
-  local int AmbientSuppressionCount;
 
 	History = `XCOMHISTORY;
-	VisualizationMgr = `XCOMVISUALIZATIONMGR;
 	// fill out variable
 	XGUnit(UnitState.GetVisualizer()).GetVisualizedGameState(iVisualizedState);
 	
@@ -110,7 +107,6 @@ function bool ShouldFireSuppression(XComGameState_Unit UnitState, out Actor Targ
 static function bool UnitCanShoot(XComGameState_Unit UnitState, int iVisualizedState)
 {
 	local XComGameStateVisualizationMgr VisualizationMgr;
-	local int RandRoll;
 	VisualizationMgr = `XCOMVISUALIZATIONMGR;
 	
 	// don't start shooting when you are selected
@@ -172,15 +168,11 @@ static function bool UnitCanShoot(XComGameState_Unit UnitState, int iVisualizedS
 // we don't want it to switch again and again, so we're hacking it by seeding it the current history index and source unit state
 static function XComGameState_Unit ChooseSuppressTarget(XComGameState_Unit SourceUnitState, int iHistIndex)
 {
-	local int i;
-	local array<StateObjectReference> VisibleEnemies;
-	local XComGameStateVisualizationMgr VisualizationMgr;
 	local XComGameStateHistory History;
 	local XComGameState_Effect Effect;
   local StateObjectReference EffectRef;
 
 	History = `XCOMHISTORY;
-	VisualizationMgr = `XCOMVISUALIZATIONMGR;
 
   foreach SourceUnitState.AppliedEffects(EffectRef)
   {
@@ -194,20 +186,6 @@ static function XComGameState_Unit ChooseSuppressTarget(XComGameState_Unit Sourc
       );
     }
   }
-
-	/* class'X2TacticalVisibilityHelpers'.static.GetAllVisibleEnemyTargetsForUnit(SourceUnitState.ObjectID, VisibleEnemies, , iHistIndex); */
-	/* for (i = VisibleEnemies.Length - 1; i >= 0; i--) */
-	/* { */
-	/* 	if (VisualizationMgr.IsActorBeingVisualized(History.GetVisualizer(VisibleEnemies[i].ObjectID), false)) */
-	/* 	{ */
-	/* 		VisibleEnemies.Remove(i, 1); */
-	/* 	} */
-	/* } */
-	/* if (VisibleEnemies.Length == 0) */
-	/* { */
-	/* 	return none; */
-	/* } */
-	/* return XComGameState_Unit(History.GetGameStateForObjectID(VisibleEnemies[(iHistIndex + SourceUnitState.ObjectID) % VisibleEnemies.Length].ObjectID, , iHistIndex)); */
 }
 
 // notes:
