@@ -201,6 +201,7 @@ static function X2AbilityTemplate AddShotType(
     ReserveActionPointCost = new class'X2AbilityCost_ReserveActionPoints';
     ReserveActionPointCost.iNumPoints = 1;
     ReserveActionPointCost.AllowedTypes.AddItem(class'X2CharacterTemplateManager'.default.OverwatchReserveActionPoint);
+    ReserveActionPointCost.AllowedTypes.AddItem('returnfire');
     Template.AbilityCosts.AddItem(ReserveActionPointCost);
   }
   else
